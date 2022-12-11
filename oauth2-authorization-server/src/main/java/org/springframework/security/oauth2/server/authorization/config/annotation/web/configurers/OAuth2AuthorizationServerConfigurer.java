@@ -65,6 +65,7 @@ import org.springframework.util.Assert;
  * @see OAuth2TokenEndpointConfigurer
  * @see OAuth2TokenIntrospectionEndpointConfigurer
  * @see OAuth2TokenRevocationEndpointConfigurer
+ * @see OAuth2PushedAuthorizationRequestEndpointConfigurer
  * @see OidcConfigurer
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
@@ -209,6 +210,18 @@ public final class OAuth2AuthorizationServerConfigurer
 	}
 
 	/**
+	 * Configures the OAuth 2.0 Pushed Authorization Request Endpoint.
+	 *
+	 * @param pushedAuthorizationRequestEndpointCustomizer the {@link Customizer} providing access to the {@link OAuth2AuthorizationEndpointConfigurer}
+	 * @return the {@link OAuth2AuthorizationServerConfigurer} for further configuration
+	 * @since 1.0.0
+	 */
+	public OAuth2AuthorizationServerConfigurer pushedAuthorizationRequestEndpoint(Customizer<OAuth2PushedAuthorizationRequestEndpointConfigurer> pushedAuthorizationRequestEndpointCustomizer) {
+		pushedAuthorizationRequestEndpointCustomizer.customize(getConfigurer(OAuth2PushedAuthorizationRequestEndpointConfigurer.class));
+		return this;
+	}
+	
+	/**
 	 * Configures OpenID Connect 1.0 support (disabled by default).
 	 *
 	 * @param oidcCustomizer the {@link Customizer} providing access to the {@link OidcConfigurer}
@@ -305,6 +318,7 @@ public final class OAuth2AuthorizationServerConfigurer
 		configurers.put(OAuth2TokenEndpointConfigurer.class, new OAuth2TokenEndpointConfigurer(this::postProcess));
 		configurers.put(OAuth2TokenIntrospectionEndpointConfigurer.class, new OAuth2TokenIntrospectionEndpointConfigurer(this::postProcess));
 		configurers.put(OAuth2TokenRevocationEndpointConfigurer.class, new OAuth2TokenRevocationEndpointConfigurer(this::postProcess));
+		configurers.put(OAuth2PushedAuthorizationRequestEndpointConfigurer.class, new OAuth2PushedAuthorizationRequestEndpointConfigurer(this::postProcess));
 		return configurers;
 	}
 
