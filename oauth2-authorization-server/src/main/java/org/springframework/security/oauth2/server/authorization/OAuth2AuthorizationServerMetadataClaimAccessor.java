@@ -70,6 +70,24 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	}
 
 	/**
+	 * Returns the {@code URL} of the Pushed Authorization Request Endpoint {@code (pushed_authorization_request_endpoint)}.
+	 *
+	 * @return the {@code URL} of the Pushed Authorization Request Endpoint
+	 */
+	default URL getPushedAuthorizationRequestEndpoint() {
+		return getClaimAsURL(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT);
+	}
+	
+	/**
+	 * Returns the {@code URL} of the Pushed Authorization Request Endpoint {@code (pushed_authorization_request_endpoint)}.
+	 *
+	 * @return the {@code URL} of the Pushed Authorization Request Endpoint
+	 */
+	default Boolean getRequirePushedAuthorizationRequests() {
+		return getClaimAsBoolean(OAuth2AuthorizationServerMetadataClaimNames.REQUIRE_PUSHED_AUTHORIZATION_REQUESTS);
+	}
+
+	/**
 	 * Returns the {@code URL} of the JSON Web Key Set {@code (jwks_uri)}.
 	 *
 	 * @return the {@code URL} of the JSON Web Key Set

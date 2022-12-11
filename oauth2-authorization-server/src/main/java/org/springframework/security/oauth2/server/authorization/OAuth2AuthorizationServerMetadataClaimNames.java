@@ -47,6 +47,16 @@ public class OAuth2AuthorizationServerMetadataClaimNames {
 	public static final String TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED = "token_endpoint_auth_methods_supported";
 
 	/**
+	 * {@code pushed_authorization_request_endpoint} - the {@code URL} of the OAuth 2.0 Pushed Authorization Request Endpoint
+	 */
+	public static final String PUSHED_AUTHORIZATION_REQUEST_ENDPOINT = "pushed_authorization_request_endpoint";
+
+	/**
+	 * {@code require_pushed_authorization_requests} - require OAuth 2.0 Pushed Authorization Request Endpoint
+	 */
+	public static final String REQUIRE_PUSHED_AUTHORIZATION_REQUESTS ="require_pushed_authorization_requests";
+	
+	/**
 	 * {@code jwks_uri} - the {@code URL} of the JSON Web Key Set
 	 */
 	public static final String JWKS_URI = "jwks_uri";

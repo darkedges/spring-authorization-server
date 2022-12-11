@@ -127,18 +127,22 @@ public class OidcProviderConfigurationHttpMessageConverter
 		private static final TypeDescriptor OBJECT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Object.class);
 		private static final TypeDescriptor STRING_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(String.class);
 		private static final TypeDescriptor URL_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(URL.class);
+		private static final TypeDescriptor BOOLEAN_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Boolean.class);
 		private final ClaimTypeConverter claimTypeConverter;
 
 		private OidcProviderConfigurationConverter() {
 			Converter<Object, ?> collectionStringConverter = getConverter(
 					TypeDescriptor.collection(Collection.class, STRING_TYPE_DESCRIPTOR));
 			Converter<Object, ?> urlConverter = getConverter(URL_TYPE_DESCRIPTOR);
+			Converter<Object, ?> booleanConverter = getConverter(BOOLEAN_TYPE_DESCRIPTOR);
 
 			Map<String, Converter<Object, ?>> claimConverters = new HashMap<>();
 			claimConverters.put(OidcProviderMetadataClaimNames.ISSUER, urlConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.AUTHORIZATION_ENDPOINT, urlConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT, urlConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED, collectionStringConverter);
+			claimConverters.put(OidcProviderMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT, urlConverter);
+			claimConverters.put(OidcProviderMetadataClaimNames.REQUIRE_PUSHED_AUTHORIZATION_REQUESTS, booleanConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.JWKS_URI, urlConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, urlConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, collectionStringConverter);

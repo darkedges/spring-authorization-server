@@ -89,6 +89,24 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	}
 
 	/**
+	 * Returns the OAuth 2.0 Pushed Authorization Request endpoint. The default is {@code /oauth2/token}.
+	 *
+	 * @return the Pushed Authorization Request endpoint
+	 */
+	public String getPushedAuthorizationRequestEndpoint() {
+		return getSetting(ConfigurationSettingNames.AuthorizationServer.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT);
+	}
+	
+	/**
+	 * Returns if Require Pushed Authorization Requests  are required. The default is {@code false}.
+	 *
+	 * @return0 if Require Pushed Authorization Requests are required
+	 */
+	public Boolean getRequirePushedAuthorizationRequests() {
+		return getSetting(ConfigurationSettingNames.AuthorizationServer.REQUIRE_PUSHED_AUTHORIZATION_REQUEST);
+	}
+	
+	/**
 	 * Returns the OpenID Connect 1.0 Client Registration endpoint. The default is {@code /connect/register}.
 	 *
 	 * @return the OpenID Connect 1.0 Client Registration endpoint
@@ -96,7 +114,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	public String getOidcClientRegistrationEndpoint() {
 		return getSetting(ConfigurationSettingNames.AuthorizationServer.OIDC_CLIENT_REGISTRATION_ENDPOINT);
 	}
-
+	
 	/**
 	 * Returns the OpenID Connect 1.0 UserInfo endpoint. The default is {@code /userinfo}.
 	 *
@@ -118,6 +136,8 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 				.jwkSetEndpoint("/oauth2/jwks")
 				.tokenRevocationEndpoint("/oauth2/revoke")
 				.tokenIntrospectionEndpoint("/oauth2/introspect")
+				.pushedAuthorizationRequestEndpoint("/oauth2/par")
+				.requirePushedAuthorizationRequests(false)
 				.oidcClientRegistrationEndpoint("/connect/register")
 				.oidcUserInfoEndpoint("/userinfo");
 	}
@@ -201,7 +221,28 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 		public Builder tokenIntrospectionEndpoint(String tokenIntrospectionEndpoint) {
 			return setting(ConfigurationSettingNames.AuthorizationServer.TOKEN_INTROSPECTION_ENDPOINT, tokenIntrospectionEndpoint);
 		}
-
+		
+		/**
+		 * Sets the OAuth 2.0 Pushed Authorization Request endpoint.
+		 *
+		 * @param pushedAuthorizationRequestEndpoint the Pushed Authorization Request endpoint
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder pushedAuthorizationRequestEndpoint(String pushedAuthorizationRequestEndpoint) {
+			return setting(ConfigurationSettingNames.AuthorizationServer.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT, pushedAuthorizationRequestEndpoint);
+		}
+		
+		/**
+		 * Sets if OAuth 2.0 Pushed Authorization Requests are required.
+		 *
+		 * @param requirePushedAuthorizationRequests the Token Introspection endpoint
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder
+		requirePushedAuthorizationRequests(Boolean requirePushedAuthorizationRequests) {
+			return setting(ConfigurationSettingNames.AuthorizationServer.REQUIRE_PUSHED_AUTHORIZATION_REQUEST, requirePushedAuthorizationRequests);
+		}
+		
 		/**
 		 * Sets the OpenID Connect 1.0 Client Registration endpoint.
 		 *

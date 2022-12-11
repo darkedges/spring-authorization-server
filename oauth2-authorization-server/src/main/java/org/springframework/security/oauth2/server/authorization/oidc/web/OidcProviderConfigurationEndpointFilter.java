@@ -96,6 +96,8 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 				.authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
 				.tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
 				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
+				.pushedAuthorizationRequestEndpoint(asUrl(issuer, authorizationServerSettings.getPushedAuthorizationRequestEndpoint()))
+				.require_pushed_authorization_requests(authorizationServerSettings.getRequirePushedAuthorizationRequests())
 				.jwkSetUrl(asUrl(issuer, authorizationServerSettings.getJwkSetEndpoint()))
 				.userInfoEndpoint(asUrl(issuer, authorizationServerSettings.getOidcUserInfoEndpoint()))
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())

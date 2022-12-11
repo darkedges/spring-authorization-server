@@ -35,6 +35,7 @@ import org.springframework.security.oauth2.core.converter.ClaimConversionService
 import org.springframework.security.oauth2.core.converter.ClaimTypeConverter;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadata;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadataClaimNames;
+import org.springframework.security.oauth2.server.authorization.oidc.OidcProviderMetadataClaimNames;
 import org.springframework.util.Assert;
 
 /**
@@ -126,18 +127,22 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverter
 		private static final TypeDescriptor OBJECT_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Object.class);
 		private static final TypeDescriptor STRING_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(String.class);
 		private static final TypeDescriptor URL_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(URL.class);
+		private static final TypeDescriptor BOOLEAN_TYPE_DESCRIPTOR = TypeDescriptor.valueOf(Boolean.class);
 		private final ClaimTypeConverter claimTypeConverter;
 
 		private OAuth2AuthorizationServerMetadataConverter() {
 			Converter<Object, ?> collectionStringConverter = getConverter(
 					TypeDescriptor.collection(Collection.class, STRING_TYPE_DESCRIPTOR));
 			Converter<Object, ?> urlConverter = getConverter(URL_TYPE_DESCRIPTOR);
+			Converter<Object, ?> booleanConverter = getConverter(BOOLEAN_TYPE_DESCRIPTOR);
 
 			Map<String, Converter<Object, ?>> claimConverters = new HashMap<>();
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.ISSUER, urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT, urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT, urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED, collectionStringConverter);
+			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT, urlConverter);
+			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.REQUIRE_PUSHED_AUTHORIZATION_REQUESTS, booleanConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI, urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED, collectionStringConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, collectionStringConverter);

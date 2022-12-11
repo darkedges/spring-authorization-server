@@ -140,6 +140,26 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		}
 
 		/**
+		 * Use this {@code pushed_authorization_request_endpoint} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, REQUIRED.
+		 *
+		 * @param pushedAuthorizationRequestEndpoint the {@code URL} of the OAuth 2.0 Pushed Authorization Request Endpoint
+		 * @return the {@link AbstractBuilder} for further configuration
+		 */
+		public B pushedAuthorizationRequestEndpoint(String pushedAuthorizationRequestEndpoint) {
+			return claim(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT, pushedAuthorizationRequestEndpoint);
+		}
+		
+		/**
+		 * Use this {@code require_pushed_authorization_requests} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, REQUIRED.
+		 *
+		 * @param require_pushed_authorization_requests are OAuth 2.0 Pushed Authorization Requests required
+		 * @return the {@link AbstractBuilder} for further configuration
+		 */
+		public B require_pushed_authorization_requests(Boolean require_pushed_authorization_requests) {
+			return claim(OAuth2AuthorizationServerMetadataClaimNames.REQUIRE_PUSHED_AUTHORIZATION_REQUESTS, require_pushed_authorization_requests);
+		}
+		
+		/**
 		 * Add this OAuth 2.0 {@code scope} to the collection of {@code scopes_supported}
 		 * in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, RECOMMENDED.
 		 *
@@ -352,6 +372,7 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 				Assert.isInstanceOf(List.class, getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED), "tokenEndpointAuthenticationMethods must be of type List");
 				Assert.notEmpty((List<?>) getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED), "tokenEndpointAuthenticationMethods cannot be empty");
 			}
+			validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT), "pushedAuthorizationRequestEndpoint must be a valid URL");
 			if (getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI) != null) {
 				validateURL(getClaims().get(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI), "jwksUri must be a valid URL");
 			}
