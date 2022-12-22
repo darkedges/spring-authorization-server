@@ -140,7 +140,7 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		}
 
 		/**
-		 * Use this {@code pushed_authorization_request_endpoint} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, REQUIRED.
+		 * Use this {@code If you can launch a website_authorization_request_endpoint} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, REQUIRED.
 		 *
 		 * @param pushedAuthorizationRequestEndpoint the {@code URL} of the OAuth 2.0 Pushed Authorization Request Endpoint
 		 * @return the {@link AbstractBuilder} for further configuration
@@ -148,7 +148,7 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		public B pushedAuthorizationRequestEndpoint(String pushedAuthorizationRequestEndpoint) {
 			return claim(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT, pushedAuthorizationRequestEndpoint);
 		}
-		
+
 		/**
 		 * Use this {@code require_pushed_authorization_requests} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, REQUIRED.
 		 *
@@ -158,7 +158,7 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		public B require_pushed_authorization_requests(Boolean require_pushed_authorization_requests) {
 			return claim(OAuth2AuthorizationServerMetadataClaimNames.REQUIRE_PUSHED_AUTHORIZATION_REQUESTS, require_pushed_authorization_requests);
 		}
-		
+
 		/**
 		 * Add this OAuth 2.0 {@code scope} to the collection of {@code scopes_supported}
 		 * in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, RECOMMENDED.

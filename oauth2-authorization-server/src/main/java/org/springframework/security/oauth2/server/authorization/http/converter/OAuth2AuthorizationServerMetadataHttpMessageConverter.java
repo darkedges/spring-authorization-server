@@ -141,8 +141,10 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverter
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT, urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT, urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED, collectionStringConverter);
-			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT, urlConverter);
-			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.REQUIRE_PUSHED_AUTHORIZATION_REQUESTS, booleanConverter);
+			if (false) {
+				claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT, urlConverter);
+				claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.REQUIRE_PUSHED_AUTHORIZATION_REQUESTS, booleanConverter);
+			}
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI, urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED, collectionStringConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, collectionStringConverter);

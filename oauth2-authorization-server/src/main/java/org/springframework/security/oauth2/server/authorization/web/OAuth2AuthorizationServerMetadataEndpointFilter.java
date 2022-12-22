@@ -88,14 +88,13 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 		AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
 		String issuer = authorizationServerContext.getIssuer();
 		AuthorizationServerSettings authorizationServerSettings = authorizationServerContext.getAuthorizationServerSettings();
-
 		OAuth2AuthorizationServerMetadata.Builder authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
 				.issuer(issuer)
 				.authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
 				.tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
 				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.jwkSetUrl(asUrl(issuer, authorizationServerSettings.getJwkSetEndpoint()))
-				.pushedAuthorizationRequestEndpoint(authorizationServerSettings.getPushedAuthorizationRequestEndpoint())
+				.pushedAuthorizationRequestEndpoint(asUrl(issuer, authorizationServerSettings.getPushedAuthorizationRequestEndpoint()))
 				.require_pushed_authorization_requests(authorizationServerSettings.getRequirePushedAuthorizationRequests())
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())

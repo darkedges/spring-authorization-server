@@ -94,6 +94,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		String userInfoEndpoint = "/userinfo";
 		String tokenRevocationEndpoint = "/oauth2/v1/revoke";
 		String tokenIntrospectionEndpoint = "/oauth2/v1/introspect";
+		String pushedAuthenticationEndpoint = "/oauth2/v1/par";
 
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
 				.issuer(issuer)
@@ -103,6 +104,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 				.oidcUserInfoEndpoint(userInfoEndpoint)
 				.tokenRevocationEndpoint(tokenRevocationEndpoint)
 				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
+				.pushedAuthorizationRequestEndpoint(pushedAuthenticationEndpoint)
 				.build();
 		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
 
@@ -133,6 +135,7 @@ public class OidcProviderConfigurationEndpointFilterTests {
 		assertThat(providerConfigurationResponse).contains("\"id_token_signing_alg_values_supported\":[\"RS256\"]");
 		assertThat(providerConfigurationResponse).contains("\"userinfo_endpoint\":\"https://example.com/issuer1/userinfo\"");
 		assertThat(providerConfigurationResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\",\"client_secret_post\",\"client_secret_jwt\",\"private_key_jwt\"]");
+		assertThat(providerConfigurationResponse).contains("\"pushed_authorization_request_endpoint\":\"https://example.com/issuer1/oauth2/v1/par\"");
 	}
 
 	@Test

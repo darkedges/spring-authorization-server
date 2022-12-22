@@ -65,6 +65,7 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 				+ "		\"issuer\": \"https://example.com/issuer1\",\n"
 				+ "		\"authorization_endpoint\": \"https://example.com/issuer1/oauth2/authorize\",\n"
 				+ "		\"token_endpoint\": \"https://example.com/issuer1/oauth2/token\",\n"
+				+ "		\"pushed_authorization_request_endpoint\": \"https://example.com/issuer1/oauth2/par\",\n"
 				+ "		\"response_types_supported\": [\"code\"]\n"
 				+ "}\n";
 		// @formatter:on
@@ -75,6 +76,7 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(new URL("https://example.com/issuer1"));
 		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/authorize"));
 		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/token"));
+		assertThat(authorizationServerMetadata.getPushedAuthorizationRequestEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/par"));
 		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).isNull();
 		assertThat(authorizationServerMetadata.getJwkSetUrl()).isNull();
 		assertThat(authorizationServerMetadata.getResponseTypes()).containsExactly("code");
@@ -93,6 +95,8 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 		String authorizationServerMetadataResponse = "{\n"
 				+ "		\"issuer\": \"https://example.com/issuer1\",\n"
 				+ "		\"authorization_endpoint\": \"https://example.com/issuer1/oauth2/authorize\",\n"
+				+ "		\"pushed_authorization_request_endpoint\": \"https://example.com/issuer1/oauth2/par\",\n"
+				+ "		\"require_pushed_authorization_requests\": false,\n"
 				+ "		\"token_endpoint\": \"https://example.com/issuer1/oauth2/token\",\n"
 				+ "		\"token_endpoint_auth_methods_supported\": [\"client_secret_basic\"],\n"
 				+ "		\"jwks_uri\": \"https://example.com/issuer1/oauth2/jwks\",\n"
@@ -112,9 +116,11 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = this.messageConverter
 				.readInternal(OAuth2AuthorizationServerMetadata.class, response);
 
-		assertThat(authorizationServerMetadata.getClaims()).hasSize(15);
+		assertThat(authorizationServerMetadata.getClaims()).hasSize(17);
 		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(new URL("https://example.com/issuer1"));
 		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/authorize"));
+		assertThat(authorizationServerMetadata.getPushedAuthorizationRequestEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/par"));
+		assertThat(authorizationServerMetadata.getRequirePushedAuthorizationRequests()).isEqualTo(false);
 		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/token"));
 		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(authorizationServerMetadata.getJwkSetUrl()).isEqualTo(new URL("https://example.com/issuer1/oauth2/jwks"));
@@ -161,6 +167,8 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 				OAuth2AuthorizationServerMetadata.builder()
 						.issuer("https://example.com/issuer1")
 						.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
+						.pushedAuthorizationRequestEndpoint("https://example.com/issuer1/oauth2/par")
+						.require_pushed_authorization_requests(true)
 						.tokenEndpoint("https://example.com/issuer1/oauth2/token")
 						.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 						.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
@@ -183,6 +191,8 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 		String authorizationServerMetadataResponse = outputMessage.getBodyAsString();
 		assertThat(authorizationServerMetadataResponse).contains("\"issuer\":\"https://example.com/issuer1\"");
 		assertThat(authorizationServerMetadataResponse).contains("\"authorization_endpoint\":\"https://example.com/issuer1/oauth2/authorize\"");
+		assertThat(authorizationServerMetadataResponse).contains("\"pushed_authorization_request_endpoint\":\"https://example.com/issuer1/oauth2/par\"");
+		assertThat(authorizationServerMetadataResponse).contains("\"require_pushed_authorization_requests\":true");
 		assertThat(authorizationServerMetadataResponse).contains("\"token_endpoint\":\"https://example.com/issuer1/oauth2/token\"");
 		assertThat(authorizationServerMetadataResponse).contains("\"token_endpoint_auth_methods_supported\":[\"client_secret_basic\"]");
 		assertThat(authorizationServerMetadataResponse).contains("\"jwks_uri\":\"https://example.com/issuer1/oauth2/jwks\"");
@@ -213,6 +223,7 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverterTests {
 						.issuer("https://example.com/issuer1")
 						.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 						.tokenEndpoint("https://example.com/issuer1/oauth2/token")
+						.pushedAuthorizationRequestEndpoint("https://example.com/issuer1/oauth2/par")
 						.responseType("code")
 						.build();
 

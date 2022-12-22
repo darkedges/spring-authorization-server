@@ -39,11 +39,13 @@ public class AuthorizationServerSettingsTests {
 		assertThat(authorizationServerSettings.getTokenIntrospectionEndpoint()).isEqualTo("/oauth2/introspect");
 		assertThat(authorizationServerSettings.getOidcClientRegistrationEndpoint()).isEqualTo("/connect/register");
 		assertThat(authorizationServerSettings.getOidcUserInfoEndpoint()).isEqualTo("/userinfo");
+		assertThat(authorizationServerSettings.getPushedAuthorizationRequestEndpoint()).isEqualTo("/oauth2/par");
 	}
 
 	@Test
 	public void buildWhenSettingsProvidedThenSet() {
 		String authorizationEndpoint = "/oauth2/v1/authorize";
+		String pushedAuthorizationRequestEndpoint = "/oauth2/v1/par";
 		String tokenEndpoint = "/oauth2/v1/token";
 		String jwkSetEndpoint = "/oauth2/v1/jwks";
 		String tokenRevocationEndpoint = "/oauth2/v1/revoke";
@@ -55,17 +57,18 @@ public class AuthorizationServerSettingsTests {
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
 				.issuer(issuer)
 				.authorizationEndpoint(authorizationEndpoint)
+				.pushedAuthorizationRequestEndpoint(pushedAuthorizationRequestEndpoint)
 				.tokenEndpoint(tokenEndpoint)
 				.jwkSetEndpoint(jwkSetEndpoint)
 				.tokenRevocationEndpoint(tokenRevocationEndpoint)
 				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
-				.tokenRevocationEndpoint(tokenRevocationEndpoint)
 				.oidcClientRegistrationEndpoint(oidcClientRegistrationEndpoint)
 				.oidcUserInfoEndpoint(oidcUserInfoEndpoint)
 				.build();
 
 		assertThat(authorizationServerSettings.getIssuer()).isEqualTo(issuer);
 		assertThat(authorizationServerSettings.getAuthorizationEndpoint()).isEqualTo(authorizationEndpoint);
+		assertThat(authorizationServerSettings.getPushedAuthorizationRequestEndpoint()).isEqualTo(pushedAuthorizationRequestEndpoint);
 		assertThat(authorizationServerSettings.getTokenEndpoint()).isEqualTo(tokenEndpoint);
 		assertThat(authorizationServerSettings.getJwkSetEndpoint()).isEqualTo(jwkSetEndpoint);
 		assertThat(authorizationServerSettings.getTokenRevocationEndpoint()).isEqualTo(tokenRevocationEndpoint);
@@ -80,8 +83,7 @@ public class AuthorizationServerSettingsTests {
 				.setting("name1", "value1")
 				.settings(settings -> settings.put("name2", "value2"))
 				.build();
-
-		assertThat(authorizationServerSettings.getSettings()).hasSize(9);
+		assertThat(authorizationServerSettings.getSettings()).hasSize(11);
 		assertThat(authorizationServerSettings.<String>getSetting("name1")).isEqualTo("value1");
 		assertThat(authorizationServerSettings.<String>getSetting("name2")).isEqualTo("value2");
 	}
@@ -139,6 +141,13 @@ public class AuthorizationServerSettingsTests {
 	public void jwksEndpointWhenNullThenThrowIllegalArgumentException() {
 		assertThatIllegalArgumentException()
 				.isThrownBy(() -> AuthorizationServerSettings.builder().jwkSetEndpoint(null))
+				.withMessage("value cannot be null");
+	}
+
+		@Test
+	public void pushedAuthenticationRequestEndpointWhenNullThenThrowIllegalArgumentException() {
+		assertThatIllegalArgumentException()
+				.isThrownBy(() -> AuthorizationServerSettings.builder().pushedAuthorizationRequestEndpoint(null))
 				.withMessage("value cannot be null");
 	}
 

@@ -55,7 +55,7 @@ public class OAuth2AuthorizationServerMetadataClaimNames {
 	 * {@code require_pushed_authorization_requests} - require OAuth 2.0 Pushed Authorization Request Endpoint
 	 */
 	public static final String REQUIRE_PUSHED_AUTHORIZATION_REQUESTS ="require_pushed_authorization_requests";
-	
+
 	/**
 	 * {@code jwks_uri} - the {@code URL} of the JSON Web Key Set
 	 */

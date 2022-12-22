@@ -41,6 +41,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 					.issuer("https://example.com/issuer1")
 					.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 					.tokenEndpoint("https://example.com/issuer1/oauth2/token")
+					.pushedAuthorizationRequestEndpoint("https://example.com/issuer1/oauth2/par")
 					.responseType("code");
 	// @formatter:on
 
@@ -49,6 +50,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = OAuth2AuthorizationServerMetadata.builder()
 				.issuer("https://example.com/issuer1")
 				.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
+				.pushedAuthorizationRequestEndpoint("https://example.com/issuer1/oauth2/par")
 				.tokenEndpoint("https://example.com/issuer1/oauth2/token")
 				.tokenEndpointAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue())
 				.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
@@ -66,6 +68,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 
 		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
 		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
+		assertThat(authorizationServerMetadata.getPushedAuthorizationRequestEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/par"));
 		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
 		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).containsExactly(ClientAuthenticationMethod.CLIENT_SECRET_BASIC.getValue());
 		assertThat(authorizationServerMetadata.getJwkSetUrl()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
@@ -86,11 +89,13 @@ public class OAuth2AuthorizationServerMetadataTests {
 				.issuer("https://example.com/issuer1")
 				.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 				.tokenEndpoint("https://example.com/issuer1/oauth2/token")
+				.pushedAuthorizationRequestEndpoint("https://example.com/issuer1/oauth2/par")
 				.responseType("code")
 				.build();
 
 		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
 		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
+		assertThat(authorizationServerMetadata.getPushedAuthorizationRequestEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/par"));
 		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
 		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).isNull();
 		assertThat(authorizationServerMetadata.getJwkSetUrl()).isNull();
@@ -109,6 +114,7 @@ public class OAuth2AuthorizationServerMetadataTests {
 		HashMap<String, Object> claims = new HashMap<>();
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.ISSUER, "https://example.com/issuer1");
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT, "https://example.com/issuer1/oauth2/authorize");
+		claims.put(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT, "https://example.com/issuer1/oauth2/par");
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT, "https://example.com/issuer1/oauth2/token");
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI, "https://example.com/issuer1/oauth2/jwks");
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED, Collections.singletonList("openid"));
@@ -123,6 +129,8 @@ public class OAuth2AuthorizationServerMetadataTests {
 		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
 		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
 		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).isNull();
+		assertThat(authorizationServerMetadata.getPushedAuthorizationRequestEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/par"));
+		assertThat(authorizationServerMetadata.getRequirePushedAuthorizationRequests()).isNull();
 		assertThat(authorizationServerMetadata.getJwkSetUrl()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
 		assertThat(authorizationServerMetadata.getScopes()).containsExactly("openid");
 		assertThat(authorizationServerMetadata.getResponseTypes()).containsExactly("code");
@@ -145,12 +153,14 @@ public class OAuth2AuthorizationServerMetadataTests {
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, Collections.singletonList("code"));
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.REVOCATION_ENDPOINT, url("https://example.com/issuer1/oauth2/revoke"));
 		claims.put(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT, url("https://example.com/issuer1/oauth2/introspect"));
+		claims.put(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT, url("https://example.com/issuer1/oauth2/par"));
 		claims.put("some-claim", "some-value");
 
 		OAuth2AuthorizationServerMetadata authorizationServerMetadata = OAuth2AuthorizationServerMetadata.withClaims(claims).build();
 
 		assertThat(authorizationServerMetadata.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
 		assertThat(authorizationServerMetadata.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
+		assertThat(authorizationServerMetadata.getPushedAuthorizationRequestEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/par"));
 		assertThat(authorizationServerMetadata.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
 		assertThat(authorizationServerMetadata.getTokenEndpointAuthenticationMethods()).isNull();
 		assertThat(authorizationServerMetadata.getJwkSetUrl()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));

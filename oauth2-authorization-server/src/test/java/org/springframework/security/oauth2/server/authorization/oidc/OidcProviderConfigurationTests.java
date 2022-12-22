@@ -38,7 +38,8 @@ public class OidcProviderConfigurationTests {
 	private final OidcProviderConfiguration.Builder minimalConfigurationBuilder =
 			OidcProviderConfiguration.builder()
 					.issuer("https://example.com/issuer1")
-					.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
+					.pushedAuthorizationRequestEndpoint("https://example.com/issuer1/oauth2/authorize")
+					.authorizationEndpoint("https://example.com/issuer1/oauth2/par")
 					.tokenEndpoint("https://example.com/issuer1/oauth2/token")
 					.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
 					.scope("openid")
@@ -50,6 +51,8 @@ public class OidcProviderConfigurationTests {
 	public void buildWhenAllRequiredClaimsAndAdditionalClaimsThenCreated() {
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.builder()
 				.issuer("https://example.com/issuer1")
+				.pushedAuthorizationRequestEndpoint("https://example.com/issuer1/oauth2/par")
+				.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 				.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 				.tokenEndpoint("https://example.com/issuer1/oauth2/token")
 				.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
@@ -84,9 +87,11 @@ public class OidcProviderConfigurationTests {
 	public void buildWhenOnlyRequiredClaimsThenCreated() {
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.builder()
 				.issuer("https://example.com/issuer1")
+				.pushedAuthorizationRequestEndpoint("https://example.com/issuer1/oauth2/par")
 				.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 				.tokenEndpoint("https://example.com/issuer1/oauth2/token")
 				.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
+				.pushedAuthorizationRequestEndpoint("https://example.com/issuer1/oauth2/par")
 				.scope("openid")
 				.responseType("code")
 				.subjectType("public")
@@ -97,6 +102,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
 		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
+		assertThat(providerConfiguration.getPushedAuthorizationRequestEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/par"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
 		assertThat(providerConfiguration.getGrantTypes()).isNull();
@@ -118,6 +124,7 @@ public class OidcProviderConfigurationTests {
 		claims.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, Collections.singletonList("RS256"));
 		claims.put(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, "https://example.com/issuer1/userinfo");
 		claims.put(OidcProviderMetadataClaimNames.REGISTRATION_ENDPOINT, "https://example.com/issuer1/connect/register");
+		claims.put(OidcProviderMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT, "https://example.com/issuer1/connect/par");
 		claims.put("some-claim", "some-value");
 
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.withClaims(claims).build();
@@ -134,6 +141,7 @@ public class OidcProviderConfigurationTests {
 		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(url("https://example.com/issuer1/userinfo"));
 		assertThat(providerConfiguration.getTokenEndpointAuthenticationMethods()).isNull();
 		assertThat(providerConfiguration.getClientRegistrationEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/register"));
+		assertThat(providerConfiguration.getPushedAuthorizationRequestEndpoint()).isEqualTo(url("https://example.com/issuer1/connect/par"));
 		assertThat(providerConfiguration.<String>getClaim("some-claim")).isEqualTo("some-value");
 	}
 
@@ -150,12 +158,14 @@ public class OidcProviderConfigurationTests {
 		claims.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, Collections.singletonList("RS256"));
 		claims.put(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, url("https://example.com/issuer1/userinfo"));
 		claims.put(OidcProviderMetadataClaimNames.REGISTRATION_ENDPOINT, url("https://example.com/issuer1/connect/register"));
+		claims.put(OidcProviderMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT, url("https://example.com/issuer1/oauth2/par"));
 		claims.put("some-claim", "some-value");
 
 		OidcProviderConfiguration providerConfiguration = OidcProviderConfiguration.withClaims(claims).build();
 
 		assertThat(providerConfiguration.getIssuer()).isEqualTo(url("https://example.com/issuer1"));
 		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/authorize"));
+		assertThat(providerConfiguration.getPushedAuthorizationRequestEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/par"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(url("https://example.com/issuer1/oauth2/token"));
 		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(url("https://example.com/issuer1/oauth2/jwks"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");

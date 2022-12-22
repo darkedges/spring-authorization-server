@@ -63,6 +63,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		String providerConfigurationResponse = "{\n"
 				+ "		\"issuer\": \"https://example.com/issuer1\",\n"
 				+ "		\"authorization_endpoint\": \"https://example.com/issuer1/oauth2/authorize\",\n"
+				+ "		\"pushed_authorization_request_endpoint\": \"https://example.com/issuer1/oauth2/par\",\n"
 				+ "		\"token_endpoint\": \"https://example.com/issuer1/oauth2/token\",\n"
 				+ "		\"jwks_uri\": \"https://example.com/issuer1/oauth2/jwks\",\n"
 				+ "		\"response_types_supported\": [\"code\"],\n"
@@ -76,6 +77,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 
 		assertThat(providerConfiguration.getIssuer()).isEqualTo(new URL("https://example.com/issuer1"));
 		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/authorize"));
+		assertThat(providerConfiguration.getPushedAuthorizationRequestEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/par"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/token"));
 		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(new URL("https://example.com/issuer1/oauth2/jwks"));
 		assertThat(providerConfiguration.getResponseTypes()).containsExactly("code");
@@ -93,6 +95,8 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 				+ "		\"issuer\": \"https://example.com/issuer1\",\n"
 				+ "		\"authorization_endpoint\": \"https://example.com/issuer1/oauth2/authorize\",\n"
 				+ "		\"token_endpoint\": \"https://example.com/issuer1/oauth2/token\",\n"
+				+ "     \"pushed_authorization_request_endpoint\": \"https://example.com/issuer1/oauth2/par\",\n"
+				+ "     \"require_pushed_authorization_requests\": false,\n"
 				+ "		\"jwks_uri\": \"https://example.com/issuer1/oauth2/jwks\",\n"
 				+ "		\"userinfo_endpoint\": \"https://example.com/issuer1/userinfo\",\n"
 				+ "		\"scopes_supported\": [\"openid\"],\n"
@@ -112,6 +116,8 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		assertThat(providerConfiguration.getIssuer()).isEqualTo(new URL("https://example.com/issuer1"));
 		assertThat(providerConfiguration.getAuthorizationEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/authorize"));
 		assertThat(providerConfiguration.getTokenEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/token"));
+		assertThat(providerConfiguration.getPushedAuthorizationRequestEndpoint()).isEqualTo(new URL("https://example.com/issuer1/oauth2/par"));
+		assertThat(providerConfiguration.getRequirePushedAuthorizationRequests()).isEqualTo(false);
 		assertThat(providerConfiguration.getJwkSetUrl()).isEqualTo(new URL("https://example.com/issuer1/oauth2/jwks"));
 		assertThat(providerConfiguration.getUserInfoEndpoint()).isEqualTo(new URL("https://example.com/issuer1/userinfo"));
 		assertThat(providerConfiguration.getScopes()).containsExactly("openid");
@@ -158,6 +164,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 						.tokenEndpoint("https://example.com/issuer1/oauth2/token")
 						.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
 						.userInfoEndpoint("https://example.com/issuer1/userinfo")
+						.pushedAuthorizationRequestEndpoint("https://example.com/issuer1/oauth2/par")
 						.scope("openid")
 						.responseType("code")
 						.grantType("authorization_code")
@@ -178,6 +185,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 		assertThat(providerConfigurationResponse).contains("\"token_endpoint\":\"https://example.com/issuer1/oauth2/token\"");
 		assertThat(providerConfigurationResponse).contains("\"jwks_uri\":\"https://example.com/issuer1/oauth2/jwks\"");
 		assertThat(providerConfigurationResponse).contains("\"userinfo_endpoint\":\"https://example.com/issuer1/userinfo\"");
+		assertThat(providerConfigurationResponse).contains("\"pushed_authorization_request_endpoint\":\"https://example.com/issuer1/oauth2/par\"");
 		assertThat(providerConfigurationResponse).contains("\"scopes_supported\":[\"openid\"]");
 		assertThat(providerConfigurationResponse).contains("\"response_types_supported\":[\"code\"]");
 		assertThat(providerConfigurationResponse).contains("\"grant_types_supported\":[\"authorization_code\",\"client_credentials\"]");
@@ -203,6 +211,7 @@ public class OidcProviderConfigurationHttpMessageConverterTests {
 						.authorizationEndpoint("https://example.com/issuer1/oauth2/authorize")
 						.tokenEndpoint("https://example.com/issuer1/oauth2/token")
 						.jwkSetUrl("https://example.com/issuer1/oauth2/jwks")
+						.pushedAuthorizationRequestEndpoint("https://example.com/issuer1/oauth2/par")
 						.responseType("code")
 						.subjectType("public")
 						.idTokenSigningAlgorithm("RS256")

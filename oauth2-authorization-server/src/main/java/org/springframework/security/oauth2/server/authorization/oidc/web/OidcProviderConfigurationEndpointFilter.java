@@ -90,7 +90,6 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 		AuthorizationServerContext authorizationServerContext = AuthorizationServerContextHolder.getContext();
 		String issuer = authorizationServerContext.getIssuer();
 		AuthorizationServerSettings authorizationServerSettings = authorizationServerContext.getAuthorizationServerSettings();
-
 		OidcProviderConfiguration.Builder providerConfiguration = OidcProviderConfiguration.builder()
 				.issuer(issuer)
 				.authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
