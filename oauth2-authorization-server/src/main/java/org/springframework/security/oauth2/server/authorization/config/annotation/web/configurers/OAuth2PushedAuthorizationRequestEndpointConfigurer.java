@@ -1,10 +1,24 @@
+/*
+ * Copyright 2020-2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2PushedAuthorizationRequestEndpointFilter;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -43,9 +57,9 @@ public class OAuth2PushedAuthorizationRequestEndpointConfigurer extends Abstract
 	void configure(HttpSecurity httpSecurity) {
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 		OAuth2PushedAuthorizationRequestEndpointFilter pushedAuthorizationRequestEndpointFilter =
-			new OAuth2PushedAuthorizationRequestEndpointFilter(
-				authorizationServerSettings.getPushedAuthorizationRequestEndpoint()
-			);
+				new OAuth2PushedAuthorizationRequestEndpointFilter(
+						authorizationServerSettings.getPushedAuthorizationRequestEndpoint()
+				);
 		pushedAuthorizationRequestEndpointFilter.setRequirePushedAuthorizationRequests(this.requirePushedAuthorizationRequests);
 		httpSecurity.addFilterBefore(postProcess(pushedAuthorizationRequestEndpointFilter), AbstractPreAuthenticatedProcessingFilter.class);
 	}

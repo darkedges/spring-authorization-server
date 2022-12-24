@@ -53,6 +53,7 @@ public final class ConfigurationSettingNames {
 
 		/**
 		 * Set the {@code URL} for the Client's JSON Web Key Set.
+		 *
 		 * @since 0.2.2
 		 */
 		public static final String JWK_SET_URL = CLIENT_SETTINGS_NAMESPACE.concat("jwk-set-url");
@@ -61,6 +62,7 @@ public final class ConfigurationSettingNames {
 		 * Set the {@link JwsAlgorithm JWS} algorithm that must be used for signing the {@link Jwt JWT}
 		 * used to authenticate the Client at the Token Endpoint for the {@link ClientAuthenticationMethod#PRIVATE_KEY_JWT private_key_jwt} and
 		 * {@link ClientAuthenticationMethod#CLIENT_SECRET_JWT client_secret_jwt} authentication methods.
+		 *
 		 * @since 0.2.2
 		 */
 		public static final String TOKEN_ENDPOINT_AUTHENTICATION_SIGNING_ALGORITHM = CLIENT_SETTINGS_NAMESPACE.concat("token-endpoint-authentication-signing-algorithm");
@@ -115,7 +117,7 @@ public final class ConfigurationSettingNames {
 		 * Set the OAuth 2.0 Pushed Authentication Request Required.
 		 */
 		public static final String REQUIRE_PUSHED_AUTHORIZATION_REQUEST = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("require-pushed-authorization-request");
-		
+
 		/**
 		 * Set the OpenID Connect 1.0 Client Registration endpoint.
 		 */
@@ -139,6 +141,7 @@ public final class ConfigurationSettingNames {
 
 		/**
 		 * Set the time-to-live for an authorization code.
+		 *
 		 * @since 0.4.0
 		 */
 		public static final String AUTHORIZATION_CODE_TIME_TO_LIVE = TOKEN_SETTINGS_NAMESPACE.concat("authorization-code-time-to-live");
@@ -150,6 +153,7 @@ public final class ConfigurationSettingNames {
 
 		/**
 		 * Set the {@link OAuth2TokenFormat token format} for an access token.
+		 *
 		 * @since 0.2.3
 		 */
 		public static final String ACCESS_TOKEN_FORMAT = TOKEN_SETTINGS_NAMESPACE.concat("access-token-format");

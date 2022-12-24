@@ -15,21 +15,21 @@
  */
 package org.springframework.security.oauth2.server.authorization;
 
+import org.springframework.security.oauth2.core.ClaimAccessor;
+
 import java.net.URL;
 import java.util.List;
-
-import org.springframework.security.oauth2.core.ClaimAccessor;
 
 /**
  * A {@link ClaimAccessor} for the "claims" an Authorization Server describes about its configuration,
  * used in OAuth 2.0 Authorization Server Metadata and OpenID Connect Discovery 1.0.
  *
  * @author Daniel Garnier-Moiroux
- * @since 0.1.1
  * @see ClaimAccessor
  * @see OAuth2AuthorizationServerMetadataClaimNames
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-2">2. Authorization Server Metadata</a>
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata">3. OpenID Provider Metadata</a>
+ * @since 0.1.1
  */
 public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAccessor {
 
@@ -77,7 +77,7 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	default URL getPushedAuthorizationRequestEndpoint() {
 		return getClaimAsURL(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT);
 	}
-	
+
 	/**
 	 * Returns the {@code URL} of the Pushed Authorization Request Endpoint {@code (pushed_authorization_request_endpoint)}.
 	 *

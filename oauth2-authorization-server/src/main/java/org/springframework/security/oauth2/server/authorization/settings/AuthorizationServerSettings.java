@@ -15,23 +15,53 @@
  */
 package org.springframework.security.oauth2.server.authorization.settings;
 
-import java.util.Map;
-
 import org.springframework.util.Assert;
+
+import java.util.Map;
 
 /**
  * A facility for authorization server configuration settings.
  *
  * @author Daniel Garnier-Moiroux
  * @author Joe Grandja
- * @since 0.1.0
  * @see AbstractSettings
  * @see ConfigurationSettingNames.AuthorizationServer
+ * @since 0.1.0
  */
 public final class AuthorizationServerSettings extends AbstractSettings {
 
 	private AuthorizationServerSettings(Map<String, Object> settings) {
 		super(settings);
+	}
+
+	/**
+	 * Constructs a new {@link Builder} with the default settings.
+	 *
+	 * @return the {@link Builder}
+	 */
+	public static Builder builder() {
+		return new Builder()
+				.authorizationEndpoint("/oauth2/authorize")
+				.tokenEndpoint("/oauth2/token")
+				.jwkSetEndpoint("/oauth2/jwks")
+				.tokenRevocationEndpoint("/oauth2/revoke")
+				.tokenIntrospectionEndpoint("/oauth2/introspect")
+				.pushedAuthorizationRequestEndpoint("/oauth2/par")
+				.requirePushedAuthorizationRequests(false)
+				.oidcClientRegistrationEndpoint("/connect/register")
+				.oidcUserInfoEndpoint("/userinfo");
+	}
+
+	/**
+	 * Constructs a new {@link Builder} with the provided settings.
+	 *
+	 * @param settings the settings to initialize the builder
+	 * @return the {@link Builder}
+	 */
+	public static Builder withSettings(Map<String, Object> settings) {
+		Assert.notEmpty(settings, "settings cannot be empty");
+		return new Builder()
+				.settings(s -> s.putAll(settings));
 	}
 
 	/**
@@ -96,7 +126,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	public String getPushedAuthorizationRequestEndpoint() {
 		return getSetting(ConfigurationSettingNames.AuthorizationServer.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT);
 	}
-	
+
 	/**
 	 * Returns if Require Pushed Authorization Requests  are required. The default is {@code false}.
 	 *
@@ -105,7 +135,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	public Boolean getRequirePushedAuthorizationRequests() {
 		return getSetting(ConfigurationSettingNames.AuthorizationServer.REQUIRE_PUSHED_AUTHORIZATION_REQUEST);
 	}
-	
+
 	/**
 	 * Returns the OpenID Connect 1.0 Client Registration endpoint. The default is {@code /connect/register}.
 	 *
@@ -114,7 +144,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	public String getOidcClientRegistrationEndpoint() {
 		return getSetting(ConfigurationSettingNames.AuthorizationServer.OIDC_CLIENT_REGISTRATION_ENDPOINT);
 	}
-	
+
 	/**
 	 * Returns the OpenID Connect 1.0 UserInfo endpoint. The default is {@code /userinfo}.
 	 *
@@ -122,36 +152,6 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	 */
 	public String getOidcUserInfoEndpoint() {
 		return getSetting(ConfigurationSettingNames.AuthorizationServer.OIDC_USER_INFO_ENDPOINT);
-	}
-
-	/**
-	 * Constructs a new {@link Builder} with the default settings.
-	 *
-	 * @return the {@link Builder}
-	 */
-	public static Builder builder() {
-		return new Builder()
-				.authorizationEndpoint("/oauth2/authorize")
-				.tokenEndpoint("/oauth2/token")
-				.jwkSetEndpoint("/oauth2/jwks")
-				.tokenRevocationEndpoint("/oauth2/revoke")
-				.tokenIntrospectionEndpoint("/oauth2/introspect")
-				.pushedAuthorizationRequestEndpoint("/oauth2/par")
-				.requirePushedAuthorizationRequests(false)
-				.oidcClientRegistrationEndpoint("/connect/register")
-				.oidcUserInfoEndpoint("/userinfo");
-	}
-
-	/**
-	 * Constructs a new {@link Builder} with the provided settings.
-	 *
-	 * @param settings the settings to initialize the builder
-	 * @return the {@link Builder}
-	 */
-	public static Builder withSettings(Map<String, Object> settings) {
-		Assert.notEmpty(settings, "settings cannot be empty");
-		return new Builder()
-				.settings(s -> s.putAll(settings));
 	}
 
 	/**
@@ -221,7 +221,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 		public Builder tokenIntrospectionEndpoint(String tokenIntrospectionEndpoint) {
 			return setting(ConfigurationSettingNames.AuthorizationServer.TOKEN_INTROSPECTION_ENDPOINT, tokenIntrospectionEndpoint);
 		}
-		
+
 		/**
 		 * Sets the OAuth 2.0 Pushed Authorization Request endpoint.
 		 *
@@ -231,7 +231,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 		public Builder pushedAuthorizationRequestEndpoint(String pushedAuthorizationRequestEndpoint) {
 			return setting(ConfigurationSettingNames.AuthorizationServer.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT, pushedAuthorizationRequestEndpoint);
 		}
-		
+
 		/**
 		 * Sets if OAuth 2.0 Pushed Authorization Requests are required.
 		 *
@@ -242,7 +242,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 		requirePushedAuthorizationRequests(Boolean requirePushedAuthorizationRequests) {
 			return setting(ConfigurationSettingNames.AuthorizationServer.REQUIRE_PUSHED_AUTHORIZATION_REQUEST, requirePushedAuthorizationRequests);
 		}
-		
+
 		/**
 		 * Sets the OpenID Connect 1.0 Client Registration endpoint.
 		 *

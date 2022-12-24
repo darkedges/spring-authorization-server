@@ -15,42 +15,38 @@
  */
 package org.springframework.security.oauth2.server.authorization.http.converter;
 
-import java.net.URL;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.convert.TypeDescriptor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpOutputMessage;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.AbstractHttpMessageConverter;
-import org.springframework.http.converter.GenericHttpMessageConverter;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.http.converter.HttpMessageNotWritableException;
+import org.springframework.http.converter.*;
 import org.springframework.security.oauth2.core.converter.ClaimConversionService;
 import org.springframework.security.oauth2.core.converter.ClaimTypeConverter;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadata;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadataClaimNames;
-import org.springframework.security.oauth2.server.authorization.oidc.OidcProviderMetadataClaimNames;
 import org.springframework.util.Assert;
+
+import java.net.URL;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * A {@link HttpMessageConverter} for an {@link OAuth2AuthorizationServerMetadata OAuth 2.0 Authorization Server Metadata Response}.
  *
  * @author Daniel Garnier-Moiroux
- * @since 0.1.1
  * @see AbstractHttpMessageConverter
  * @see OAuth2AuthorizationServerMetadata
+ * @since 0.1.1
  */
 public class OAuth2AuthorizationServerMetadataHttpMessageConverter
 		extends AbstractHttpMessageConverter<OAuth2AuthorizationServerMetadata> {
 
 	private static final ParameterizedTypeReference<Map<String, Object>> STRING_OBJECT_MAP =
-			new ParameterizedTypeReference<Map<String, Object>>() {};
+			new ParameterizedTypeReference<Map<String, Object>>() {
+			};
 
 	private final GenericHttpMessageConverter<Object> jsonMessageConverter = HttpMessageConverters.getJsonMessageConverter();
 
@@ -103,7 +99,7 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverter
 	 * parameters to an {@link OAuth2AuthorizationServerMetadata}.
 	 *
 	 * @param authorizationServerMetadataConverter the {@link Converter} used for converting to
-	 * an {@link OAuth2AuthorizationServerMetadata}.
+	 *                                             an {@link OAuth2AuthorizationServerMetadata}.
 	 */
 	public final void setAuthorizationServerMetadataConverter(Converter<Map<String, Object>, OAuth2AuthorizationServerMetadata> authorizationServerMetadataConverter) {
 		Assert.notNull(authorizationServerMetadataConverter, "authorizationServerMetadataConverter cannot be null");
@@ -115,7 +111,7 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverter
 	 * {@code Map} representation of the OAuth 2.0 Authorization Server Metadata.
 	 *
 	 * @param authorizationServerMetadataParametersConverter the {@link Converter} used for converting to a
-	 * {@code Map} representation of the OAuth 2.0 Authorization Server Metadata.
+	 *                                                       {@code Map} representation of the OAuth 2.0 Authorization Server Metadata.
 	 */
 	public final void setAuthorizationServerMetadataParametersConverter(Converter<OAuth2AuthorizationServerMetadata, Map<String, Object>> authorizationServerMetadataParametersConverter) {
 		Assert.notNull(authorizationServerMetadataParametersConverter, "authorizationServerMetadataParametersConverter cannot be null");
@@ -157,14 +153,14 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverter
 			this.claimTypeConverter = new ClaimTypeConverter(claimConverters);
 		}
 
+		private static Converter<Object, ?> getConverter(TypeDescriptor targetDescriptor) {
+			return (source) -> CLAIM_CONVERSION_SERVICE.convert(source, OBJECT_TYPE_DESCRIPTOR, targetDescriptor);
+		}
+
 		@Override
 		public OAuth2AuthorizationServerMetadata convert(Map<String, Object> source) {
 			Map<String, Object> parsedClaims = this.claimTypeConverter.convert(source);
 			return OAuth2AuthorizationServerMetadata.withClaims(parsedClaims).build();
-		}
-
-		private static Converter<Object, ?> getConverter(TypeDescriptor targetDescriptor) {
-			return (source) -> CLAIM_CONVERSION_SERVICE.convert(source, OBJECT_TYPE_DESCRIPTOR, targetDescriptor);
 		}
 	}
 

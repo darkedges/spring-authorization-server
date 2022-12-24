@@ -15,14 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.nimbusds.jose.jwk.source.JWKSource;
-
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
@@ -49,6 +42,12 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * An {@link AbstractHttpConfigurer} for OAuth 2.0 Authorization Server support.
  *
@@ -57,7 +56,6 @@ import org.springframework.util.Assert;
  * @author Gerardo Roza
  * @author Ovidiu Popa
  * @author Gaurav Tiwari
- * @since 0.0.1
  * @see AbstractHttpConfigurer
  * @see OAuth2ClientAuthenticationConfigurer
  * @see OAuth2AuthorizationServerMetadataEndpointConfigurer
@@ -71,6 +69,7 @@ import org.springframework.util.Assert;
  * @see OAuth2AuthorizationService
  * @see OAuth2AuthorizationConsentService
  * @see NimbusJwkSetEndpointFilter
+ * @since 0.0.1
  */
 public final class OAuth2AuthorizationServerConfigurer
 		extends AbstractHttpConfigurer<OAuth2AuthorizationServerConfigurer, HttpSecurity> {
@@ -78,6 +77,21 @@ public final class OAuth2AuthorizationServerConfigurer
 	private final Map<Class<? extends AbstractOAuth2Configurer>, AbstractOAuth2Configurer> configurers = createConfigurers();
 	private RequestMatcher endpointsMatcher;
 
+	private static void validateAuthorizationServerSettings(AuthorizationServerSettings authorizationServerSettings) {
+		if (authorizationServerSettings.getIssuer() != null) {
+			URI issuerUri;
+			try {
+				issuerUri = new URI(authorizationServerSettings.getIssuer());
+				issuerUri.toURL();
+			} catch (Exception ex) {
+				throw new IllegalArgumentException("issuer must be a valid URL", ex);
+			}
+			// rfc8414 https://datatracker.ietf.org/doc/html/rfc8414#section-2
+			if (issuerUri.getQuery() != null || issuerUri.getFragment() != null) {
+				throw new IllegalArgumentException("issuer cannot contain query or fragment component");
+			}
+		}
+	}
 
 	/**
 	 * Sets the repository of registered clients.
@@ -220,7 +234,7 @@ public final class OAuth2AuthorizationServerConfigurer
 		pushedAuthorizationRequestEndpointCustomizer.customize(getConfigurer(OAuth2PushedAuthorizationRequestEndpointConfigurer.class));
 		return this;
 	}
-	
+
 	/**
 	 * Configures OpenID Connect 1.0 support (disabled by default).
 	 *
@@ -334,22 +348,6 @@ public final class OAuth2AuthorizationServerConfigurer
 	private <T extends AbstractOAuth2Configurer> RequestMatcher getRequestMatcher(Class<T> configurerType) {
 		T configurer = getConfigurer(configurerType);
 		return configurer != null ? configurer.getRequestMatcher() : null;
-	}
-
-	private static void validateAuthorizationServerSettings(AuthorizationServerSettings authorizationServerSettings) {
-		if (authorizationServerSettings.getIssuer() != null) {
-			URI issuerUri;
-			try {
-				issuerUri = new URI(authorizationServerSettings.getIssuer());
-				issuerUri.toURL();
-			} catch (Exception ex) {
-				throw new IllegalArgumentException("issuer must be a valid URL", ex);
-			}
-			// rfc8414 https://datatracker.ietf.org/doc/html/rfc8414#section-2
-			if (issuerUri.getQuery() != null || issuerUri.getFragment() != null) {
-				throw new IllegalArgumentException("issuer cannot contain query or fragment component");
-			}
-		}
 	}
 
 }
