@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -14,6 +15,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.io.Writer;
 
 public class OAuth2PushedAuthorizationRequestEndpointFilter extends OncePerRequestFilter {
 	private static final String DEFAULT_PUSHED_AUTHORIZATION_REQUEST_ENDPOINT_URI = "/oauth2/par";
@@ -47,11 +49,15 @@ public class OAuth2PushedAuthorizationRequestEndpointFilter extends OncePerReque
 	}
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+		System.out.println("doFilterInternal");
 		if (!this.pushedAuthorizationRequestEndpointMatcher.matches(request)) {
 			filterChain.doFilter(request, response);
 			return;
 		}
-		filterChain.doFilter(request, response);
+		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+		try (Writer writer = response.getWriter()) {
+			writer.write("{}");	// toString() excludes private keys
+		}
 	}
 
 	public void setRequirePushedAuthorizationRequests(boolean requirePushedAuthorizationRequests) {
