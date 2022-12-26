@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020-2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -12,22 +27,35 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * An {@link Authentication} implementation used for OAuth 2.0 Pushed Authenitcation Request.
+ * An {@link Authentication} implementation used for OAuth 2.0 Pushed Authenitcation
+ * Request.
  *
  * @author Nicholas Irving
  * @see AbstractAuthenticationToken
  * @see OAuth2PushedAuthorizationRequest
- * @see OAuth2PushedAuthorizationRequestProvider
  * @since 1.0.0
  */
-public class OAuth2PushedAuthorzationRequestAuthenticationToken extends AbstractAuthenticationToken {
+public class OAuth2PushedAuthorizationRequestAuthenticationToken extends AbstractAuthenticationToken {
+
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
+
 	private final String token;
+
 	private final Authentication clientPrincipal;
+
 	private final Map<String, Object> additionalParameters;
+
 	private final OAuth2PushedAuthorizationRequest pushedAuthorizationRequestClaims;
 
-	public OAuth2PushedAuthorzationRequestAuthenticationToken(String token, Authentication clientPrincipal, Map<String, Object> additionalParameters) {
+	/**
+	 * Constructs an {@code OAuth2TokenIntrospectionAuthenticationToken} using the
+	 * provided parameters.
+	 * @param token the token
+	 * @param clientPrincipal the authenticated client principal
+	 * @param additionalParameters the additional parameters
+	 */
+	public OAuth2PushedAuthorizationRequestAuthenticationToken(String token, Authentication clientPrincipal,
+			Map<String, Object> additionalParameters) {
 		super(Collections.emptyList());
 		Assert.hasText(token, "token cannot be empty");
 		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
@@ -50,17 +78,14 @@ public class OAuth2PushedAuthorzationRequestAuthenticationToken extends Abstract
 
 	/**
 	 * Returns the token.
-	 *
 	 * @return the token
 	 */
 	public String getToken() {
 		return this.token;
 	}
 
-
 	/**
 	 * Returns the additional parameters.
-	 *
 	 * @return the additional parameters
 	 */
 	public Map<String, Object> getAdditionalParameters() {
@@ -69,10 +94,10 @@ public class OAuth2PushedAuthorzationRequestAuthenticationToken extends Abstract
 
 	/**
 	 * Returns the token claims.
-	 *
 	 * @return the {@link OAuth2TokenIntrospection}
 	 */
 	public OAuth2PushedAuthorizationRequest getPushedAuthorizationRequestClaims() {
 		return this.pushedAuthorizationRequestClaims;
 	}
+
 }

@@ -15,15 +15,10 @@
  */
 package sample.config;
 
-import java.util.UUID;
-
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2PushedAuthorizationRequestEndpointConfigurer;
-import sample.jose.Jwks;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -52,6 +47,9 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import sample.jose.Jwks;
+
+import java.util.UUID;
 
 /**
  * @author Joe Grandja
@@ -66,16 +64,16 @@ public class AuthorizationServerConfig {
 		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
 		// @formatter:off
 		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-			.oidc(Customizer.withDefaults()) // Enable OpenID Connect 1.0
-			.pushedAuthorizationRequestEndpoint(pushedAuthorizationRequestEndpoint ->
-				pushedAuthorizationRequestEndpoint.requirePushedAuthorizationRequests(true)
-			);
+				.oidc(Customizer.withDefaults()) // Enable OpenID Connect 1.0
+				.pushedAuthorizationRequestEndpoint(pushedAuthorizationRequestEndpoint ->
+						pushedAuthorizationRequestEndpoint.requirePushedAuthorizationRequests(true)
+				);
 
 		http
-			.exceptionHandling(exceptions ->
-				exceptions.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
-			)
-			.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
+				.exceptionHandling(exceptions ->
+						exceptions.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
+				)
+				.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
 		// @formatter:on
 		return http.build();
 	}

@@ -15,10 +15,6 @@
  */
 package sample;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.WebResponse;
 import com.gargoylesoftware.htmlunit.html.DomElement;
@@ -27,7 +23,6 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,6 +32,10 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -52,14 +51,7 @@ import static org.mockito.Mockito.when;
 @AutoConfigureMockMvc
 public class DefaultAuthorizationServerConsentTests {
 
-	@Autowired
-	private WebClient webClient;
-
-	@MockBean
-	private OAuth2AuthorizationConsentService authorizationConsentService;
-
 	private final String redirectUri = "http://127.0.0.1/login/oauth2/code/messaging-client-oidc";
-
 	private final String authorizationRequestUri = UriComponentsBuilder
 			.fromPath("/oauth2/authorize")
 			.queryParam("response_type", "code")
@@ -68,6 +60,10 @@ public class DefaultAuthorizationServerConsentTests {
 			.queryParam("state", "state")
 			.queryParam("redirect_uri", this.redirectUri)
 			.toUriString();
+	@Autowired
+	private WebClient webClient;
+	@MockBean
+	private OAuth2AuthorizationConsentService authorizationConsentService;
 
 	@BeforeEach
 	public void setUp() {
