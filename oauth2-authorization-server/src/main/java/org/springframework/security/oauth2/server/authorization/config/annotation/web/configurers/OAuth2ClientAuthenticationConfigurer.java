@@ -160,14 +160,12 @@ public final class OAuth2ClientAuthenticationConfigurer extends AbstractOAuth2Co
 	void init(HttpSecurity httpSecurity) {
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 		this.requestMatcher = new OrRequestMatcher(
-				new AntPathRequestMatcher(
-						authorizationServerSettings.getTokenEndpoint(),
+				new AntPathRequestMatcher(authorizationServerSettings.getTokenEndpoint(), HttpMethod.POST.name()),
+				new AntPathRequestMatcher(authorizationServerSettings.getTokenIntrospectionEndpoint(),
 						HttpMethod.POST.name()),
-				new AntPathRequestMatcher(
-						authorizationServerSettings.getTokenIntrospectionEndpoint(),
+				new AntPathRequestMatcher(authorizationServerSettings.getTokenRevocationEndpoint(),
 						HttpMethod.POST.name()),
-				new AntPathRequestMatcher(
-						authorizationServerSettings.getTokenRevocationEndpoint(),
+				new AntPathRequestMatcher(authorizationServerSettings.getPushedAuthorizationRequestEndpoint(),
 						HttpMethod.POST.name()));
 
 		List<AuthenticationProvider> authenticationProviders = createDefaultAuthenticationProviders(httpSecurity);
