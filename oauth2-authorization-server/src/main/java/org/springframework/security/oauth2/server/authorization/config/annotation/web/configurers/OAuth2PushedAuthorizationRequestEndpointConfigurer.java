@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
@@ -55,9 +56,11 @@ public class OAuth2PushedAuthorizationRequestEndpointConfigurer extends Abstract
 
 	@Override
 	void configure(HttpSecurity httpSecurity) {
+		AuthenticationManager authenticationManager = httpSecurity.getSharedObject(AuthenticationManager.class);
 		AuthorizationServerSettings authorizationServerSettings = OAuth2ConfigurerUtils.getAuthorizationServerSettings(httpSecurity);
 		OAuth2PushedAuthorizationRequestEndpointFilter pushedAuthorizationRequestEndpointFilter =
 				new OAuth2PushedAuthorizationRequestEndpointFilter(
+						authenticationManager,
 						authorizationServerSettings.getPushedAuthorizationRequestEndpoint()
 				);
 		pushedAuthorizationRequestEndpointFilter.setRequirePushedAuthorizationRequests(this.requirePushedAuthorizationRequests);

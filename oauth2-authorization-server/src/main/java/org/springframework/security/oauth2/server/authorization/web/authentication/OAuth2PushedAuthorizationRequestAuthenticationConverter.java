@@ -15,72 +15,62 @@
  */
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import jakarta.servlet.http.HttpServletRequest;
-
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2TokenIntrospectionAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.web.OAuth2TokenIntrospectionEndpointFilter;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2PushedAuthorizationRequestAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.web.OAuth2PushedAuthorizationRequestEndpointFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Attempts to extract an Introspection Request from {@link HttpServletRequest}
- * and then converts it to an {@link OAuth2TokenIntrospectionAuthenticationToken} used for authenticating the request.
+ * and then converts it to an {@link OAuth2PushedAuthorizationRequestAuthenticationToken} used for authenticating the request.
  *
- * @author Gerardo Roza
- * @author Joe Grandja
- * @since 0.4.0
+ * @author Nicholas Irving
  * @see AuthenticationConverter
- * @see OAuth2TokenIntrospectionAuthenticationToken
- * @see OAuth2TokenIntrospectionEndpointFilter
+ * @see OAuth2PushedAuthorizationRequestAuthenticationToken
+ * @see OAuth2PushedAuthorizationRequestEndpointFilter
+ * @since 1.0.0
  */
-public final class OAuth2TokenIntrospectionAuthenticationConverter implements AuthenticationConverter {
+public final class OAuth2PushedAuthorizationRequestAuthenticationConverter implements AuthenticationConverter {
+
+	private static void throwError(String errorCode, String parameterName) {
+		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Pushed Authorization Request Parameter: " + parameterName,
+				"https://www.rfc-editor.org/rfc/rfc9126#name-request");
+		throw new OAuth2AuthenticationException(error);
+	}
 
 	@Override
-	public Authentication convert(HttpServletRequest request) {
+	public Authentication convert(HttpServletRequest httpServletRequest) {
 		Authentication clientPrincipal = SecurityContextHolder.getContext().getAuthentication();
 
-		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
+		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(httpServletRequest);
 
-		// token (REQUIRED)
-		String token = parameters.getFirst(OAuth2ParameterNames.TOKEN);
-		if (!StringUtils.hasText(token) ||
-				parameters.get(OAuth2ParameterNames.TOKEN).size() != 1) {
-			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.TOKEN);
-		}
-
-		// token_type_hint (OPTIONAL)
-		String tokenTypeHint = parameters.getFirst(OAuth2ParameterNames.TOKEN_TYPE_HINT);
-		if (StringUtils.hasText(tokenTypeHint) &&
-				parameters.get(OAuth2ParameterNames.TOKEN_TYPE_HINT).size() != 1) {
-			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.TOKEN_TYPE_HINT);
+		// request (REQUIRED)
+		String request = parameters.getFirst(com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST);
+		if (!StringUtils.hasText(request) ||
+				parameters.get(com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST).size() != 1) {
+			throwError(OAuth2ErrorCodes.INVALID_REQUEST, com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST);
 		}
 
 		Map<String, Object> additionalParameters = new HashMap<>();
 		parameters.forEach((key, value) -> {
-			if (!key.equals(OAuth2ParameterNames.TOKEN) &&
-					!key.equals(OAuth2ParameterNames.TOKEN_TYPE_HINT)) {
+			if (!key.equals(com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST)) {
 				additionalParameters.put(key, value.get(0));
 			}
 		});
 
-		return new OAuth2TokenIntrospectionAuthenticationToken(
-				token, clientPrincipal, tokenTypeHint, additionalParameters);
-	}
-
-	private static void throwError(String errorCode, String parameterName) {
-		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Token Introspection Parameter: " + parameterName,
-				"https://datatracker.ietf.org/doc/html/rfc7662#section-2.1");
-		throw new OAuth2AuthenticationException(error);
+		return new OAuth2PushedAuthorizationRequestAuthenticationToken(
+				request, clientPrincipal, additionalParameters);
 	}
 
 }

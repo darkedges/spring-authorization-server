@@ -39,7 +39,7 @@ public class OAuth2PushedAuthorizationRequestAuthenticationToken extends Abstrac
 
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
 
-	private final String token;
+	private final String request;
 
 	private final Authentication clientPrincipal;
 
@@ -50,16 +50,16 @@ public class OAuth2PushedAuthorizationRequestAuthenticationToken extends Abstrac
 	/**
 	 * Constructs an {@code OAuth2TokenIntrospectionAuthenticationToken} using the
 	 * provided parameters.
-	 * @param token the token
+	 * @param request the request
 	 * @param clientPrincipal the authenticated client principal
 	 * @param additionalParameters the additional parameters
 	 */
-	public OAuth2PushedAuthorizationRequestAuthenticationToken(String token, Authentication clientPrincipal,
+	public OAuth2PushedAuthorizationRequestAuthenticationToken(String request, Authentication clientPrincipal,
 			Map<String, Object> additionalParameters) {
 		super(Collections.emptyList());
-		Assert.hasText(token, "token cannot be empty");
+		Assert.hasText(request, "request cannot be empty");
 		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
-		this.token = token;
+		this.request = request;
 		this.clientPrincipal = clientPrincipal;
 		this.additionalParameters = Collections.unmodifiableMap(
 				additionalParameters != null ? new HashMap<>(additionalParameters) : Collections.emptyMap());
@@ -80,8 +80,8 @@ public class OAuth2PushedAuthorizationRequestAuthenticationToken extends Abstrac
 	 * Returns the token.
 	 * @return the token
 	 */
-	public String getToken() {
-		return this.token;
+	public String getRequest() {
+		return this.request;
 	}
 
 	/**
