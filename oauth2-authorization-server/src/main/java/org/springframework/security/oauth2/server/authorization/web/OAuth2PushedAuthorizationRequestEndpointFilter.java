@@ -90,17 +90,14 @@ public class OAuth2PushedAuthorizationRequestEndpointFilter extends OncePerReque
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-		System.out.println("doFilterInternal");
 		if (!this.pushedAuthorizationRequestEndpointMatcher.matches(request)) {
 			filterChain.doFilter(request, response);
 			return;
 		}
 
 		try {
-			Authentication tokenIntrospectionAuthentication = this.authenticationConverter.convert(request);
-			Authentication tokenIntrospectionAuthenticationResult =
-					this.authenticationManager.authenticate(tokenIntrospectionAuthentication);
-			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, tokenIntrospectionAuthenticationResult);
+			Authentication pushedAuthorizationRequestAuthentication = this.authenticationConverter.convert(request);
+			this.authenticationSuccessHandler.onAuthenticationSuccess(request, response, pushedAuthorizationRequestAuthentication);
 		} catch (OAuth2AuthenticationException ex) {
 			SecurityContextHolder.clearContext();
 			if (this.logger.isTraceEnabled()) {

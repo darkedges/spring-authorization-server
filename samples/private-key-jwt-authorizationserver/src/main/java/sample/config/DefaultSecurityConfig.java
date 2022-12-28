@@ -24,10 +24,15 @@ import org.springframework.security.authentication.DefaultAuthenticationEventPub
 import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 import java.util.Collections;
+import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
  * @author Joe Grandja
@@ -50,7 +55,7 @@ public class DefaultSecurityConfig {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		});
+		}).formLogin(withDefaults());
 		return http.build();
 	}
 
@@ -60,5 +65,15 @@ public class DefaultSecurityConfig {
 		((DefaultAuthenticationEventPublisher) authentication).setAdditionalExceptionMappings(Collections
 				.singletonMap(OAuth2AuthenticationException.class, AuthenticationFailureBadCredentialsEvent.class));
 		return authentication;
+	}
+
+	@Bean
+	UserDetailsService users() {
+		UserDetails user = User.withDefaultPasswordEncoder()
+				.username("admin")
+				.password("password")
+				.roles("USER")
+				.build();
+		return new InMemoryUserDetailsManager(user);
 	}
 }

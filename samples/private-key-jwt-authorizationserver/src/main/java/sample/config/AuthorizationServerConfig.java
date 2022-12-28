@@ -55,6 +55,7 @@ public class AuthorizationServerConfig {
 				.clientSecret("")
 				.clientAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.redirectUri("http://127.0.0.1:8080/code").scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE)
 				.clientSettings(clientSettings).tokenSettings(tokenSettings).build();
 		return new InMemoryRegisteredClientRepository(registeredClient);
@@ -64,7 +65,7 @@ public class AuthorizationServerConfig {
 	@Order(Ordered.HIGHEST_PRECEDENCE)
 	public SecurityFilterChain authServerSecurityFilterChain(HttpSecurity http) throws Exception {
 		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(Customizer.withDefaults());
+		http.formLogin(Customizer.withDefaults()).getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(Customizer.withDefaults());
 		return http.build();
 	}
 
