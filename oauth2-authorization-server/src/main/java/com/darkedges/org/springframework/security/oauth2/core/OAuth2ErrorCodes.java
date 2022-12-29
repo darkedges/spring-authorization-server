@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 package com.darkedges.org.springframework.security.oauth2.core;
+
 /**
- *
  * @author Nicholas Irving
  * @since 1.0.0
- *
  */
 public class OAuth2ErrorCodes {
 	public static final String INVALID_REQUEST = "invalid_request";

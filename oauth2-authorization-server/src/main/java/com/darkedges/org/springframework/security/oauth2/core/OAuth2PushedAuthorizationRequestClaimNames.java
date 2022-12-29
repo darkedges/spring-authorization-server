@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 package com.darkedges.org.springframework.security.oauth2.core;
+
 /**
- *
  * @author Nicholas Irving
  * @since 1.0.0
- *
  */
 public class OAuth2PushedAuthorizationRequestClaimNames {
 	public static final String REQUEST_URI = "request_uri";

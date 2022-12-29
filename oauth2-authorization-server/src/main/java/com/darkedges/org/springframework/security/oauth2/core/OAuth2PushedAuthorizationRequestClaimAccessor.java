@@ -17,11 +17,10 @@ package com.darkedges.org.springframework.security.oauth2.core;
 
 import org.springframework.security.oauth2.core.ClaimAccessor;
 import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimNames;
+
 /**
- *
  * @author Nicholas Irving
  * @since 1.0.0
- *
  */
 public interface OAuth2PushedAuthorizationRequestClaimAccessor extends ClaimAccessor {
 	default boolean isActive() {

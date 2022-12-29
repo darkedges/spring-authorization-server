@@ -16,28 +16,19 @@
 package com.darkedges.org.springframework.security.oauth2.core;
 
 import org.springframework.security.core.SpringSecurityCoreVersion;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
 import org.springframework.util.Assert;
 
 import java.io.Serializable;
 
 /**
- *
  * @author Nicholas Irving
  * @since 1.0.0
- *
  */
 public class RedirectUriMethod implements Serializable {
 
-	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
-
 	public static final RedirectUriMethod REQUEST_URI = new RedirectUriMethod(
 			"urn:ietf:params:oauth:request_uri");
-
+	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
 	private final String type;
 
 	public RedirectUriMethod(String value) {
@@ -46,6 +37,6 @@ public class RedirectUriMethod implements Serializable {
 	}
 
 	public String getValue(String value) {
-		return new StringBuilder().append(this.type).append(":").append(value).toString();
+		return this.type + ":" + value;
 	}
 }
