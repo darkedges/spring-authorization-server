@@ -48,6 +48,7 @@ public class AuthorizationServerConfig {
 	public RegisteredClientRepository registeredClientRepository() {
 		String jwkSetUri = "http://127.0.0.1:9000/resources";
 		ClientSettings clientSettings = ClientSettings.builder()
+				.requireProofKey(true)
 				.tokenEndpointAuthenticationSigningAlgorithm(SignatureAlgorithm.ES256).jwkSetUrl(jwkSetUri).build();
 		TokenSettings tokenSettings = TokenSettings.builder().build();
 		RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())

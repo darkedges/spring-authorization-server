@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class IndexController {
 	@GetMapping(value = "/resources", produces = "application/json")
 	public String getResources() {
-		System.out.println("/resources");
 		String keys = "{\"keys\":[{"
 				+ "\"kty\": \"EC\","
 				+ "\"d\": \"5rjI4pBE_C2RbQ0W0iVuPk79cqZ-2SazUnLo5bndl7Y\","

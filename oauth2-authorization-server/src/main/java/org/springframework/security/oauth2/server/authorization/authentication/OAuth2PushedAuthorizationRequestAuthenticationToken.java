@@ -15,60 +15,104 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
+import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.authorization.OAuth2PushedAuthorizationRequest;
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenIntrospection;
 import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
- * An {@link Authentication} implementation used for OAuth 2.0 Pushed Authenitcation
- * Request.
+ * An {@link Authentication} implementation for the OAuth 2.0 Authorization Request
+ * used in the Authorization Code Grant.
  *
- * @author Nicholas Irving
- * @see AbstractAuthenticationToken
- * @see OAuth2PushedAuthorizationRequest
- * @since 1.0.0
+ * @author Joe Grandja
+ * @see OAuth2PushedAuthorizationRequestAuthenticationProvider
+ * @see OAuth2AuthorizationConsentAuthenticationProvider
+ * @since 0.1.2
  */
 public class OAuth2PushedAuthorizationRequestAuthenticationToken extends AbstractAuthenticationToken {
-
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
-
-	private final String request;
-
-	private final Authentication clientPrincipal;
-
+	private final String authorizationUri;
+	private final String clientId;
+	private final Authentication principal;
+	private final String redirectUri;
+	private final String state;
+	private final Set<String> scopes;
 	private final Map<String, Object> additionalParameters;
-
-	private final OAuth2PushedAuthorizationRequest pushedAuthorizationRequestClaims;
+	private final OAuth2PushedAuthorizationRequest requestClaims;
 
 	/**
-	 * Constructs an {@code OAuth2TokenIntrospectionAuthenticationToken} using the
-	 * provided parameters.
-	 * @param request the request
-	 * @param clientPrincipal the authenticated client principal
+	 * Constructs an {@code OAuth2PushedAuthorizationRequestAuthenticationToken} using the provided parameters.
+	 *
+	 * @param authorizationUri     the authorization URI
+	 * @param clientId             the client identifier
+	 * @param principal            the {@code Principal} (Resource Owner)
+	 * @param redirectUri          the redirect uri
+	 * @param state                the state
+	 * @param scopes               the requested scope(s)
 	 * @param additionalParameters the additional parameters
+	 * @since 1.0.0
 	 */
-	public OAuth2PushedAuthorizationRequestAuthenticationToken(String request, Authentication clientPrincipal,
-			Map<String, Object> additionalParameters) {
+	public OAuth2PushedAuthorizationRequestAuthenticationToken(String authorizationUri, String clientId, Authentication principal,
+			@Nullable String redirectUri, @Nullable String state, @Nullable Set<String> scopes, @Nullable Map<String, Object> additionalParameters) {
 		super(Collections.emptyList());
-		Assert.hasText(request, "request cannot be empty");
-		Assert.notNull(clientPrincipal, "clientPrincipal cannot be null");
-		this.request = request;
-		this.clientPrincipal = clientPrincipal;
+		Assert.hasText(authorizationUri, "authorizationUri cannot be empty");
+		Assert.hasText(clientId, "clientId cannot be empty");
+		Assert.notNull(principal, "principal cannot be null");
+		this.authorizationUri = authorizationUri;
+		this.clientId = clientId;
+		this.principal = principal;
+		this.state = state;
+		this.requestClaims = OAuth2PushedAuthorizationRequest.builder().build();
+		this.scopes = Collections.unmodifiableSet(
+				scopes != null ?
+						new HashSet<>(scopes) :
+						Collections.emptySet());
 		this.additionalParameters = Collections.unmodifiableMap(
-				additionalParameters != null ? new HashMap<>(additionalParameters) : Collections.emptyMap());
-		this.pushedAuthorizationRequestClaims = OAuth2PushedAuthorizationRequest.builder().build();
+				additionalParameters != null ?
+						new HashMap<>(additionalParameters) :
+						Collections.emptyMap());
+		this.redirectUri = redirectUri;
 	}
+
+	/**
+	 * Constructs an {@code OAuth2PushedAuthorizationRequestAuthenticationToken} using the provided parameters.
+	 *
+	 * @param authorizationUri the authorization URI
+	 * @param clientId         the client identifier
+	 * @param principal        the {@code Principal} (Resource Owner)
+	 * @param requestClaims    the {@link OAuth2PushedAuthorizationRequest}
+	 * @param state            the state
+	 * @param scopes           the authorized scope(s)
+	 * @since 1.0.0
+	 */
+	public OAuth2PushedAuthorizationRequestAuthenticationToken(String authorizationUri, String clientId, Authentication principal,
+			OAuth2PushedAuthorizationRequest requestClaims, @Nullable String redirectUri, @Nullable String state, @Nullable Set<String> scopes) {
+		super(Collections.emptyList());
+		Assert.hasText(authorizationUri, "authorizationUri cannot be empty");
+		Assert.hasText(clientId, "clientId cannot be empty");
+		Assert.notNull(principal, "principal cannot be null");
+		this.authorizationUri = authorizationUri;
+		this.clientId = clientId;
+		this.principal = principal;
+		this.requestClaims = requestClaims;
+		this.redirectUri = redirectUri;
+		this.state = state;
+		this.scopes = Collections.unmodifiableSet(
+				scopes != null ?
+						new HashSet<>(scopes) :
+						Collections.emptySet());
+		this.additionalParameters = Collections.emptyMap();
+		setAuthenticated(true);
+	}
+
 
 	@Override
 	public Object getPrincipal() {
-		return this.clientPrincipal;
+		return this.principal;
 	}
 
 	@Override
@@ -77,27 +121,67 @@ public class OAuth2PushedAuthorizationRequestAuthenticationToken extends Abstrac
 	}
 
 	/**
-	 * Returns the token.
-	 * @return the token
+	 * Returns the authorization URI.
+	 *
+	 * @return the authorization URI
 	 */
-	public String getRequest() {
-		return this.request;
+	public String getAuthorizationUri() {
+		return this.authorizationUri;
+	}
+
+	/**
+	 * Returns the client identifier.
+	 *
+	 * @return the client identifier
+	 */
+	public String getClientId() {
+		return this.clientId;
+	}
+
+	/**
+	 * Returns the redirect uri.
+	 *
+	 * @return the redirect uri
+	 */
+	@Nullable
+	public String getRedirectUri() {
+		return this.redirectUri;
+	}
+
+	/**
+	 * Returns the state.
+	 *
+	 * @return the state
+	 */
+	@Nullable
+	public String getState() {
+		return this.state;
+	}
+
+	/**
+	 * Returns the requested (or authorized) scope(s).
+	 *
+	 * @return the requested (or authorized) scope(s), or an empty {@code Set} if not available
+	 */
+	public Set<String> getScopes() {
+		return this.scopes;
 	}
 
 	/**
 	 * Returns the additional parameters.
-	 * @return the additional parameters
+	 *
+	 * @return the additional parameters, or an empty {@code Map} if not available
 	 */
 	public Map<String, Object> getAdditionalParameters() {
 		return this.additionalParameters;
 	}
 
 	/**
-	 * Returns the token claims.
-	 * @return the {@link OAuth2TokenIntrospection}
+	 * Returns the {@link OAuth2PushedAuthorizationRequest}.
+	 *
+	 * @return the {@link OAuth2PushedAuthorizationRequest}
 	 */
-	public OAuth2PushedAuthorizationRequest getPushedAuthorizationRequestClaims() {
-		return this.pushedAuthorizationRequestClaims;
+	public OAuth2PushedAuthorizationRequest getRequestClaims() {
+		return this.requestClaims;
 	}
-
 }
