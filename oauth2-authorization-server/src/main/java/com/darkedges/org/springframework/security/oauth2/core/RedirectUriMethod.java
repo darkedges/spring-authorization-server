@@ -26,9 +26,10 @@ import java.io.Serializable;
  */
 public class RedirectUriMethod implements Serializable {
 
-	public static final RedirectUriMethod REQUEST_URI = new RedirectUriMethod(
-			"urn:ietf:params:oauth:request_uri");
+	public static final RedirectUriMethod REQUEST_URI = new RedirectUriMethod("urn:ietf:params:oauth:request_uri");
+
 	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
+
 	private final String type;
 
 	public RedirectUriMethod(String value) {
@@ -39,4 +40,5 @@ public class RedirectUriMethod implements Serializable {
 	public String getValue(String value) {
 		return this.type + ":" + value;
 	}
+
 }

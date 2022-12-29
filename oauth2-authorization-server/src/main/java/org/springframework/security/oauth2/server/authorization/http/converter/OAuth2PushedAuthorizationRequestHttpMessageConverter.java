@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020-2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.security.oauth2.server.authorization.http.converter;
 
 import com.darkedges.org.springframework.security.oauth2.core.OAuth2PushedAuthorizationRequestClaimNames;
@@ -12,7 +27,6 @@ import org.springframework.security.oauth2.core.converter.ClaimConversionService
 import org.springframework.security.oauth2.core.converter.ClaimTypeConverter;
 import org.springframework.security.oauth2.server.authorization.OAuth2PushedAuthorizationRequest;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.net.URL;
@@ -23,9 +37,9 @@ import java.util.*;
  * A {@link HttpMessageConverter} for an {@link OAuth2PushedAuthorizationRequest OAuth 2.0 Token Introspection Response}.
  *
  * @author Nicholas Irving
- * @since 1.0.0
  * @see AbstractHttpMessageConverter
  * @see OAuth2PushedAuthorizationRequest
+ * @since 1.0.0
  */
 public class OAuth2PushedAuthorizationRequestHttpMessageConverter extends AbstractHttpMessageConverter<OAuth2PushedAuthorizationRequest> {
 	private static final ParameterizedTypeReference<Map<String, Object>> STRING_OBJECT_MAP = new ParameterizedTypeReference<Map<String, Object>>() {
@@ -89,7 +103,7 @@ public class OAuth2PushedAuthorizationRequestHttpMessageConverter extends Abstra
 	 * to a {@code Map} representation of the Token Introspection Response parameters.
 	 *
 	 * @param PushedAuthorizationRequestParametersConverter the {@link Converter} used for converting to a
-	 * {@code Map} representation of the Token Introspection Response parameters
+	 *                                                      {@code Map} representation of the Token Introspection Response parameters
 	 */
 	public final void setPushedAuthorizationRequestParametersConverter(
 			Converter<OAuth2PushedAuthorizationRequest, Map<String, Object>> PushedAuthorizationRequestParametersConverter) {
@@ -122,12 +136,6 @@ public class OAuth2PushedAuthorizationRequestHttpMessageConverter extends Abstra
 			this.claimTypeConverter = new ClaimTypeConverter(claimConverters);
 		}
 
-		@Override
-		public OAuth2PushedAuthorizationRequest convert(Map<String, Object> source) {
-			Map<String, Object> parsedClaims = this.claimTypeConverter.convert(source);
-			return OAuth2PushedAuthorizationRequest.withClaims(parsedClaims).build();
-		}
-
 		private static Converter<Object, ?> getConverter(TypeDescriptor targetDescriptor) {
 			return (source) -> CLAIM_CONVERSION_SERVICE.convert(source, OBJECT_TYPE_DESCRIPTOR, targetDescriptor);
 		}
@@ -137,6 +145,12 @@ public class OAuth2PushedAuthorizationRequestHttpMessageConverter extends Abstra
 				return Collections.emptyList();
 			}
 			return Arrays.asList(StringUtils.delimitedListToStringArray(scope.toString(), " "));
+		}
+
+		@Override
+		public OAuth2PushedAuthorizationRequest convert(Map<String, Object> source) {
+			Map<String, Object> parsedClaims = this.claimTypeConverter.convert(source);
+			return OAuth2PushedAuthorizationRequest.withClaims(parsedClaims).build();
 		}
 	}
 

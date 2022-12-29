@@ -16,31 +16,24 @@
 
 package org.springframework.security.oauth2.server.authorization;
 
-import java.io.Serializable;
-import java.net.URI;
-import java.net.URL;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
-
 import com.darkedges.org.springframework.security.oauth2.core.OAuth2PushedAuthorizationRequestClaimNames;
 import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimAccessor;
-import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimNames;
 import org.springframework.security.oauth2.server.authorization.util.SpringAuthorizationServerVersion;
 import org.springframework.util.Assert;
+
+import java.io.Serializable;
+import java.time.Instant;
+import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * A representation of the claims returned in an OAuth 2.0 Token Introspection Response.
  *
  * @author Gerardo Roza
  * @author Joe Grandja
- * @since 0.1.1
  * @see OAuth2TokenIntrospectionClaimAccessor
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc7662#section-2.2">Section 2.2 Introspection Response</a>
+ * @since 0.1.1
  */
 public final class OAuth2PushedAuthorizationRequest implements OAuth2TokenIntrospectionClaimAccessor, Serializable {
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;
@@ -48,16 +41,6 @@ public final class OAuth2PushedAuthorizationRequest implements OAuth2TokenIntros
 
 	private OAuth2PushedAuthorizationRequest(Map<String, Object> claims) {
 		this.claims = Collections.unmodifiableMap(new LinkedHashMap<>(claims));
-	}
-
-	/**
-	 * Returns the claims in the Token Introspection Response.
-	 *
-	 * @return a {@code Map} of the claims
-	 */
-	@Override
-	public Map<String, Object> getClaims() {
-		return this.claims;
 	}
 
 	/**
@@ -80,6 +63,16 @@ public final class OAuth2PushedAuthorizationRequest implements OAuth2TokenIntros
 		return builder().claims(c -> c.putAll(claims));
 	}
 
+	/**
+	 * Returns the claims in the Token Introspection Response.
+	 *
+	 * @return a {@code Map} of the claims
+	 */
+	@Override
+	public Map<String, Object> getClaims() {
+		return this.claims;
+	}
+
 	public Instant getExpiresIn() {
 		return getClaimAsInstant(OAuth2PushedAuthorizationRequestClaimNames.EXPIRES_IN);
 	}
@@ -89,7 +82,6 @@ public final class OAuth2PushedAuthorizationRequest implements OAuth2TokenIntros
 	 */
 	public static class Builder {
 		private final Map<String, Object> claims = new LinkedHashMap<>();
-
 
 
 		/**
@@ -116,7 +108,7 @@ public final class OAuth2PushedAuthorizationRequest implements OAuth2TokenIntros
 		/**
 		 * Sets the claim.
 		 *
-		 * @param name the claim name
+		 * @param name  the claim name
 		 * @param value the claim value
 		 * @return the {@link Builder} for further configuration
 		 */

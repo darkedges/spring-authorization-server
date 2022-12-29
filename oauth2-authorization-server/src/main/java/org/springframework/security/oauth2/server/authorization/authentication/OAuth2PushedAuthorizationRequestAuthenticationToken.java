@@ -28,10 +28,10 @@ import java.util.*;
  * An {@link Authentication} implementation for the OAuth 2.0 Authorization Request
  * used in the Authorization Code Grant.
  *
- * @author Joe Grandja
+ * @author Nicholas Irving
  * @see OAuth2PushedAuthorizationRequestAuthenticationProvider
  * @see OAuth2AuthorizationConsentAuthenticationProvider
- * @since 0.1.2
+ * @since 1.0.0
  */
 public class OAuth2PushedAuthorizationRequestAuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = SpringAuthorizationServerVersion.SERIAL_VERSION_UID;

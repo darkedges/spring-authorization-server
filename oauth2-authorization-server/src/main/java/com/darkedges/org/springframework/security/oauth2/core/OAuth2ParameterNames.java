@@ -20,5 +20,7 @@ package com.darkedges.org.springframework.security.oauth2.core;
  * @since 1.0.0
  */
 public class OAuth2ParameterNames {
+
 	public static final String REQUEST = "request";
+
 }

@@ -23,7 +23,9 @@ import org.springframework.security.oauth2.core.OAuth2TokenIntrospectionClaimNam
  * @since 1.0.0
  */
 public interface OAuth2PushedAuthorizationRequestClaimAccessor extends ClaimAccessor {
+
 	default boolean isActive() {
 		return Boolean.TRUE.equals(getClaimAsBoolean(OAuth2TokenIntrospectionClaimNames.ACTIVE));
 	}
+
 }

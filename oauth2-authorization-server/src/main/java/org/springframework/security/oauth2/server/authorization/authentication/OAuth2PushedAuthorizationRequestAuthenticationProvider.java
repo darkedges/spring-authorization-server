@@ -1,3 +1,18 @@
+/*
+ * Copyright 2020-2021 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
 import org.apache.commons.logging.Log;
@@ -12,7 +27,6 @@ import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
-import org.springframework.security.oauth2.jwt.JwtDecoderFactory;
 import org.springframework.security.oauth2.server.authorization.*;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
@@ -24,7 +38,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.security.Principal;
-import java.time.Instant;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -33,20 +46,18 @@ import java.util.function.Consumer;
  * used in the Authorization Code Grant.
  *
  * @author Nicholas Irving
- * @since 1.0.0
  * @see OAuth2PushedAuthorizationRequestAuthenticationToken
  * @see OAuth2PushedAuthorizationRequestAuthenticationValidator
  * @see RegisteredClientRepository
  * @see OAuth2AuthorizationService
  * @see OAuth2AuthorizationConsentService
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1">Section 4.1.1 Pushed Authorization Request</a>
+ * @since 1.0.0
  */
 public class OAuth2PushedAuthorizationRequestAuthenticationProvider implements AuthenticationProvider {
-	private final Log logger = LogFactory.getLog(getClass());
-
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1";
 	private static final String PKCE_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc7636#section-4.4.1";
-
+	private final Log logger = LogFactory.getLog(getClass());
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
 	private Consumer<OAuth2PushedAuthorizationRequestAuthenticationContext> authenticationValidator =
@@ -58,7 +69,7 @@ public class OAuth2PushedAuthorizationRequestAuthenticationProvider implements A
 	 * Constructs an {@code OAuth2PushedAuthorizationRequestAuthenticationProvider} using the provided parameters.
 	 *
 	 * @param registeredClientRepository the repository of registered clients
-	 * @param authorizationService the authorization service
+	 * @param authorizationService       the authorization service
 	 */
 	public OAuth2PushedAuthorizationRequestAuthenticationProvider(RegisteredClientRepository registeredClientRepository,
 			OAuth2AuthorizationService authorizationService) {
@@ -66,6 +77,86 @@ public class OAuth2PushedAuthorizationRequestAuthenticationProvider implements A
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
+	}
+
+	private static OAuth2Authorization.Builder authorizationBuilder(RegisteredClient registeredClient, Authentication principal,
+			OAuth2AuthorizationRequest authorizationRequest) {
+		return OAuth2Authorization.withRegisteredClient(registeredClient)
+				.principalName(principal.getName())
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.attribute(Principal.class.getName(), principal)
+				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest);
+	}
+
+	private static OAuth2TokenContext createAuthorizationCodeTokenContext(
+			OAuth2PushedAuthorizationRequestAuthenticationToken PushedAuthorizationRequestAuthentication,
+			RegisteredClient registeredClient, OAuth2Authorization authorization, Set<String> authorizedScopes) {
+
+		// @formatter:off
+		DefaultOAuth2TokenContext.Builder tokenContextBuilder = DefaultOAuth2TokenContext.builder()
+				.registeredClient(registeredClient)
+				.principal((Authentication) PushedAuthorizationRequestAuthentication.getPrincipal())
+				.authorizationServerContext(AuthorizationServerContextHolder.getContext())
+				.tokenType(new OAuth2TokenType(OAuth2ParameterNames.CODE))
+				.authorizedScopes(authorizedScopes)
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.authorizationGrant(PushedAuthorizationRequestAuthentication);
+		// @formatter:on
+
+		if (authorization != null) {
+			tokenContextBuilder.authorization(authorization);
+		}
+
+		return tokenContextBuilder.build();
+	}
+
+	private static boolean isPrincipalAuthenticated(Authentication principal) {
+		return principal != null &&
+				!AnonymousAuthenticationToken.class.isAssignableFrom(principal.getClass()) &&
+				principal.isAuthenticated();
+	}
+
+	private static void throwError(String errorCode, String parameterName,
+			OAuth2PushedAuthorizationRequestAuthenticationToken PushedAuthorizationRequestAuthentication,
+			RegisteredClient registeredClient) {
+		throwError(errorCode, parameterName, ERROR_URI, PushedAuthorizationRequestAuthentication, registeredClient, null);
+	}
+
+	private static void throwError(String errorCode, String parameterName, String errorUri,
+			OAuth2PushedAuthorizationRequestAuthenticationToken PushedAuthorizationRequestAuthentication,
+			RegisteredClient registeredClient, OAuth2AuthorizationRequest authorizationRequest) {
+		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, errorUri);
+		throwError(error, parameterName, PushedAuthorizationRequestAuthentication, registeredClient, authorizationRequest);
+	}
+
+	private static void throwError(OAuth2Error error, String parameterName,
+			OAuth2PushedAuthorizationRequestAuthenticationToken PushedAuthorizationRequestAuthentication,
+			RegisteredClient registeredClient, OAuth2AuthorizationRequest authorizationRequest) {
+
+		String redirectUri = resolveRedirectUri(authorizationRequest, registeredClient);
+		if (error.getErrorCode().equals(OAuth2ErrorCodes.INVALID_REQUEST) &&
+				(parameterName.equals(OAuth2ParameterNames.CLIENT_ID) ||
+						parameterName.equals(OAuth2ParameterNames.STATE))) {
+			redirectUri = null;        // Prevent redirects
+		}
+		OAuth2PushedAuthorizationRequestAuthenticationToken PushedAuthorizationRequestAuthenticationResult =
+				new OAuth2PushedAuthorizationRequestAuthenticationToken(
+						PushedAuthorizationRequestAuthentication.getAuthorizationUri(), PushedAuthorizationRequestAuthentication.getClientId(),
+						(Authentication) PushedAuthorizationRequestAuthentication.getPrincipal(), redirectUri,
+						PushedAuthorizationRequestAuthentication.getState(), PushedAuthorizationRequestAuthentication.getScopes(),
+						PushedAuthorizationRequestAuthentication.getAdditionalParameters());
+
+		throw new OAuth2PushedAuthorizationRequestAuthenticationException(error, PushedAuthorizationRequestAuthenticationResult);
+	}
+
+	private static String resolveRedirectUri(OAuth2AuthorizationRequest authorizationRequest, RegisteredClient registeredClient) {
+		if (authorizationRequest != null && StringUtils.hasText(authorizationRequest.getRedirectUri())) {
+			return authorizationRequest.getRedirectUri();
+		}
+		if (registeredClient != null) {
+			return registeredClient.getRedirectUris().iterator().next();
+		}
+		return null;
 	}
 
 	/**
@@ -184,85 +275,6 @@ public class OAuth2PushedAuthorizationRequestAuthenticationProvider implements A
 				authorizationRequest.getState(), authorizationRequest.getScopes());
 	}
 
-	private static OAuth2Authorization.Builder authorizationBuilder(RegisteredClient registeredClient, Authentication principal,
-			OAuth2AuthorizationRequest authorizationRequest) {
-		return OAuth2Authorization.withRegisteredClient(registeredClient)
-				.principalName(principal.getName())
-				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.attribute(Principal.class.getName(), principal)
-				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest);
-	}
-
-	private static OAuth2TokenContext createAuthorizationCodeTokenContext(
-			OAuth2PushedAuthorizationRequestAuthenticationToken PushedAuthorizationRequestAuthentication,
-			RegisteredClient registeredClient, OAuth2Authorization authorization, Set<String> authorizedScopes) {
-
-		// @formatter:off
-		DefaultOAuth2TokenContext.Builder tokenContextBuilder = DefaultOAuth2TokenContext.builder()
-				.registeredClient(registeredClient)
-				.principal((Authentication) PushedAuthorizationRequestAuthentication.getPrincipal())
-				.authorizationServerContext(AuthorizationServerContextHolder.getContext())
-				.tokenType(new OAuth2TokenType(OAuth2ParameterNames.CODE))
-				.authorizedScopes(authorizedScopes)
-				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.authorizationGrant(PushedAuthorizationRequestAuthentication);
-		// @formatter:on
-
-		if (authorization != null) {
-			tokenContextBuilder.authorization(authorization);
-		}
-
-		return tokenContextBuilder.build();
-	}
-
-	private static boolean isPrincipalAuthenticated(Authentication principal) {
-		return principal != null &&
-				!AnonymousAuthenticationToken.class.isAssignableFrom(principal.getClass()) &&
-				principal.isAuthenticated();
-	}
-
-	private static void throwError(String errorCode, String parameterName,
-			OAuth2PushedAuthorizationRequestAuthenticationToken PushedAuthorizationRequestAuthentication,
-			RegisteredClient registeredClient) {
-		throwError(errorCode, parameterName, ERROR_URI, PushedAuthorizationRequestAuthentication, registeredClient, null);
-	}
-
-	private static void throwError(String errorCode, String parameterName, String errorUri,
-			OAuth2PushedAuthorizationRequestAuthenticationToken PushedAuthorizationRequestAuthentication,
-			RegisteredClient registeredClient, OAuth2AuthorizationRequest authorizationRequest) {
-		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, errorUri);
-		throwError(error, parameterName, PushedAuthorizationRequestAuthentication, registeredClient, authorizationRequest);
-	}
-
-	private static void throwError(OAuth2Error error, String parameterName,
-			OAuth2PushedAuthorizationRequestAuthenticationToken PushedAuthorizationRequestAuthentication,
-			RegisteredClient registeredClient, OAuth2AuthorizationRequest authorizationRequest) {
-
-		String redirectUri = resolveRedirectUri(authorizationRequest, registeredClient);
-		if (error.getErrorCode().equals(OAuth2ErrorCodes.INVALID_REQUEST) &&
-				(parameterName.equals(OAuth2ParameterNames.CLIENT_ID) ||
-						parameterName.equals(OAuth2ParameterNames.STATE))) {
-			redirectUri = null;		// Prevent redirects
-		}
-		OAuth2PushedAuthorizationRequestAuthenticationToken PushedAuthorizationRequestAuthenticationResult =
-				new OAuth2PushedAuthorizationRequestAuthenticationToken(
-						PushedAuthorizationRequestAuthentication.getAuthorizationUri(), PushedAuthorizationRequestAuthentication.getClientId(),
-						(Authentication) PushedAuthorizationRequestAuthentication.getPrincipal(), redirectUri,
-						PushedAuthorizationRequestAuthentication.getState(), PushedAuthorizationRequestAuthentication.getScopes(),
-						PushedAuthorizationRequestAuthentication.getAdditionalParameters());
-
-		throw new OAuth2PushedAuthorizationRequestAuthenticationException(error, PushedAuthorizationRequestAuthenticationResult);
-	}
-
-	private static String resolveRedirectUri(OAuth2AuthorizationRequest authorizationRequest, RegisteredClient registeredClient) {
-		if (authorizationRequest != null && StringUtils.hasText(authorizationRequest.getRedirectUri())) {
-			return authorizationRequest.getRedirectUri();
-		}
-		if (registeredClient != null) {
-			return registeredClient.getRedirectUris().iterator().next();
-		}
-		return null;
-	}
 	@Override
 	public boolean supports(Class<?> authentication) {
 		return OAuth2PushedAuthorizationRequestAuthenticationToken.class.isAssignableFrom(authentication);
