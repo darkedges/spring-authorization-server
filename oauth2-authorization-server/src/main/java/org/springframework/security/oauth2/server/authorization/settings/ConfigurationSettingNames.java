@@ -106,17 +106,7 @@ public final class ConfigurationSettingNames {
 		/**
 		 * Set the OAuth 2.0 Token Introspection endpoint.
 		 */
-		public static final String TOKEN_INTROSPECTION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("ccccc");
-
-		/**
-		 * Set the OAuth 2.0 Pushed Authentication Endpoint endpoint.
-		 */
-		public static final String PUSHED_AUTHORIZATION_REQUEST_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("pushed-authorization-request-endpoint");
-
-		/**
-		 * Set the OAuth 2.0 Pushed Authentication Request Required.
-		 */
-		public static final String REQUIRE_PUSHED_AUTHORIZATION_REQUEST = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("require-pushed-authorization-request");
+		public static final String TOKEN_INTROSPECTION_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("token-introspection-endpoint");
 
 		/**
 		 * Set the OpenID Connect 1.0 Client Registration endpoint.
@@ -127,10 +117,26 @@ public final class ConfigurationSettingNames {
 		 * Set the OpenID Connect 1.0 UserInfo endpoint.
 		 */
 		public static final String OIDC_USER_INFO_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("oidc-user-info-endpoint");
+
+		/**
+		 * Set the OAuth 2.0 Pushed Authentication Request endpoint.
+		 */
+		public static final String PUSHED_AUTHORIZATION_REQUEST_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("pushed-authorization-request-endpoint");
+
+		/**
+		 * Set the OAuth 2.0 Pushed Authentication Request Required.
+		 */
+		public static final String REQUIRE_PUSHED_AUTHORIZATION_REQUEST = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("require-pushed-authorization-request");
+
 		/**
 		 * Set the OAuth 2.0 TLS Client Certificate Bound Access Tokens value.
 		 */
 		public static final String TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS = SETTINGS_NAMESPACE.concat("tls-client-certificate-bound-access-tokens");
+
+		/**
+		 * Set the FAPI Enabled flag.
+		 */
+		public static final String FAPI_ENABLED = SETTINGS_NAMESPACE.concat("fapi-enabled");
 		private AuthorizationServer() {
 		}
 

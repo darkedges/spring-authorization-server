@@ -66,7 +66,8 @@ public class AuthorizationServerConfig {
 	@Order(Ordered.HIGHEST_PRECEDENCE)
 	public SecurityFilterChain authServerSecurityFilterChain(HttpSecurity http) throws Exception {
 		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-		http.formLogin(Customizer.withDefaults()).getConfigurer(OAuth2AuthorizationServerConfigurer.class).oidc(Customizer.withDefaults());
+		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder().enableFAPI().build();
+		http.formLogin(Customizer.withDefaults()).getConfigurer(OAuth2AuthorizationServerConfigurer.class).authorizationServerSettings(authorizationServerSettings).oidc(Customizer.withDefaults());
 		return http.build();
 	}
 

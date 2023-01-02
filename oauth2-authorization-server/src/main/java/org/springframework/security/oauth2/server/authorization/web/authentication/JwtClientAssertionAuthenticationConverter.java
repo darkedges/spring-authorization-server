@@ -17,6 +17,7 @@ package org.springframework.security.oauth2.server.authorization.web.authenticat
 
 import java.util.Map;
 
+import com.darkedges.fapi.FAPIUtil;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.lang.Nullable;
@@ -71,10 +72,15 @@ public final class JwtClientAssertionAuthenticationConverter implements Authenti
 		}
 
 		// client_id (OPTIONAL as per specification but REQUIRED by this implementation)
-		String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
-		if (!StringUtils.hasText(clientId) ||
-				parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
-			throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
+		String clientId;
+		if (FAPIUtil.isEnabled()) {
+			clientId = FAPIUtil.getClientId(jwtAssertion);
+		} else {
+			 clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
+			if (!StringUtils.hasText(clientId) ||
+					parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
+				throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);
+			}
 		}
 
 		Map<String, Object> additionalParameters = OAuth2EndpointUtils.getParametersIfMatchesAuthorizationCodeGrantRequest(request,

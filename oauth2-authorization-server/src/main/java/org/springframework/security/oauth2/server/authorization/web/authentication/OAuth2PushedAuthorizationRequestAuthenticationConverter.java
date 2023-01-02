@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
+import com.darkedges.fapi.FAPIUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -96,15 +97,6 @@ public final class OAuth2PushedAuthorizationRequestAuthenticationConverter imple
 
 		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(httpServletRequest);
 
-		// response_type (REQUIRED)
-		String responseType = httpServletRequest.getParameter(OAuth2ParameterNames.RESPONSE_TYPE);
-		if (!StringUtils.hasText(responseType) ||
-				parameters.get(OAuth2ParameterNames.RESPONSE_TYPE).size() != 1) {
-			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.RESPONSE_TYPE);
-		} else if (!responseType.equals(OAuth2AuthorizationResponseType.CODE.getValue())) {
-			throwError(OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE, OAuth2ParameterNames.RESPONSE_TYPE);
-		}
-
 		// request (REQUIRED)
 		String request = parameters.getFirst(com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST);
 		if (!StringUtils.hasText(request) ||
@@ -118,12 +110,11 @@ public final class OAuth2PushedAuthorizationRequestAuthenticationConverter imple
 		}
 
 		// client_id (REQUIRED)
-		String clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
-		if (!StringUtils.hasText(clientId) ||
-				parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
+		String clientId = FAPIUtil.getClientId(request);
+		if (!StringUtils.hasText(clientId)) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
 		}
-
+		// Lookup the client and validate the request
 		RegisteredClient registeredClient = registeredClientRepository.findByClientId(clientId);
 		if (registeredClient == null) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
@@ -136,65 +127,46 @@ public final class OAuth2PushedAuthorizationRequestAuthenticationConverter imple
 			throwInvalidPushedAuthorizationRequest(com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST, ex);
 		}
 
+		// response_type (REQUIRED)
+		String responseType = jwtAssertion.getClaimAsString(OAuth2ParameterNames.RESPONSE_TYPE);
+		if (!StringUtils.hasText(responseType)) {
+			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.RESPONSE_TYPE);
+		} else if (!responseType.equals(OAuth2AuthorizationResponseType.CODE.getValue())) {
+			throwError(OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE, OAuth2ParameterNames.RESPONSE_TYPE);
+		}
+
 		// code_challenge (REQUIRED for public clients) - RFC 7636 (PKCE)
-		String codeChallenge = parameters.getFirst(PkceParameterNames.CODE_CHALLENGE);
-		if (StringUtils.hasText(codeChallenge) &&
-				parameters.get(PkceParameterNames.CODE_CHALLENGE).size() != 1) {
+		String codeChallenge = jwtAssertion.getClaimAsString(PkceParameterNames.CODE_CHALLENGE);
+		if (!StringUtils.hasText(codeChallenge)) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE, PKCE_ERROR_URI);
 		}
 
 		// code_challenge_method (OPTIONAL for public clients) - RFC 7636 (PKCE)
-		String codeChallengeMethod = parameters.getFirst(PkceParameterNames.CODE_CHALLENGE_METHOD);
-		if (StringUtils.hasText(codeChallengeMethod) &&
-				parameters.get(PkceParameterNames.CODE_CHALLENGE_METHOD).size() != 1) {
+		String codeChallengeMethod = jwtAssertion.getClaimAsString(PkceParameterNames.CODE_CHALLENGE_METHOD);
+		if (!StringUtils.hasText(codeChallengeMethod)) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD, PKCE_ERROR_URI);
 		}
 
-		// scope (OPTIONAL)
+		// scope (REQUIRED)
 		Set<String> scopes = null;
-		String scope = parameters.getFirst(OAuth2ParameterNames.SCOPE);
-		if (StringUtils.hasText(scope) &&
-				parameters.get(OAuth2ParameterNames.SCOPE).size() != 1) {
-			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE);
-		}
+		String scope = jwtAssertion.getClaimAsString(OAuth2ParameterNames.SCOPE);
 		if (!StringUtils.hasText(scope)) {
-			scope =  (String) jwtAssertion.getClaims().get(OAuth2ParameterNames.SCOPE);
-			if (!StringUtils.hasText(scope)) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE);
-			}
-		}
-		if (StringUtils.hasText(scope)) {
+			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.SCOPE);
+		} else {
 			scopes = new HashSet<>(
 					Arrays.asList(StringUtils.delimitedListToStringArray(scope, " ")));
 		}
 
-		// state (RECOMMENDED)
-		String state = parameters.getFirst(OAuth2ParameterNames.STATE);
-		if (StringUtils.hasText(state) &&
-				parameters.get(OAuth2ParameterNames.STATE).size() != 1) {
+		// state (REQUIRED)
+		String state = jwtAssertion.getClaimAsString(OAuth2ParameterNames.STATE);
+		if (!StringUtils.hasText(state)) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.STATE);
 		}
-		if (!StringUtils.hasText(state)) {
-			state =  (String) jwtAssertion.getClaims().get(OAuth2ParameterNames.STATE);
-			if (!StringUtils.hasText(state)) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.STATE);
-			}
-		}
 
-		// redirect_uri (OPTIONAL)
-		String redirectUri = parameters.getFirst(OAuth2ParameterNames.REDIRECT_URI);
-		if (StringUtils.hasText(redirectUri) &&
-				parameters.get(OAuth2ParameterNames.REDIRECT_URI).size() != 1) {
-			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI);
-		}
+		// redirect_uri (REQUIRED)
+		String redirectUri = jwtAssertion.getClaimAsString(OAuth2ParameterNames.REDIRECT_URI);
 		if (!StringUtils.hasText(redirectUri)) {
-			redirectUri =  (String) jwtAssertion.getClaims().get(OAuth2ParameterNames.REDIRECT_URI);
-			if (!StringUtils.hasText(redirectUri)) {
-				throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI);
-			}
-		}
-		if (!jwtAssertion.getClaims().get(JwtClaimNames.ISS).equals(clientId)) {
-			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
+			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI);
 		}
 
 		Map<String, Object> additionalParameters = new HashMap<>();
@@ -202,7 +174,8 @@ public final class OAuth2PushedAuthorizationRequestAuthenticationConverter imple
 			if (!key.equals(com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST)
 					&& !key.equals(OAuth2ParameterNames.CLIENT_ID)
 					&& !key.equals(OAuth2ParameterNames.SCOPE)
-					&& !key.equals(OAuth2ParameterNames.STATE)) {
+					&& !key.equals(OAuth2ParameterNames.STATE)
+					&& !key.equals(OAuth2ParameterNames.REDIRECT_URI)) {
 				additionalParameters.put(key, value.get(0));
 			}
 		});

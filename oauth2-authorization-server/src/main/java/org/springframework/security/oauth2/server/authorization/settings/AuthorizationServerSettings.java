@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.settings;
 
+import org.springframework.security.oauth2.server.authorization.OAuth2PushedAuthorizationRequest;
 import org.springframework.util.Assert;
 
 import java.util.Map;
@@ -157,10 +158,19 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	/**
 	 * Returns the OAuth 2.0 TLS Client Certificate Bound Access Tokens value. The default is {@code /oauth2/token}.
 	 *
-	 * @return the Pushed Authorization Request endpoint
+	 * @return the Auth 2.0 TLS Client Certificate Bound Access Tokens value
 	 */
 	public boolean getTlsClientCertificateBoundAccessTokens() {
 		return getSetting(ConfigurationSettingNames.AuthorizationServer.TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS)!=null?getSetting(ConfigurationSettingNames.AuthorizationServer.TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS):false;
+	}
+
+	/**
+	 * Returns the OAuth 2.0 TLS Client Certificate Bound Access Tokens value. The default is {@code /oauth2/token}.
+	 *
+	 * @return the Auth 2.0 TLS Client Certificate Bound Access Tokens value
+	 */
+	public boolean isFAPIEnabled() {
+		return getSetting(ConfigurationSettingNames.AuthorizationServer.FAPI_ENABLED)!=null?getSetting(ConfigurationSettingNames.AuthorizationServer.FAPI_ENABLED):false;
 	}
 
 	/**
@@ -247,9 +257,12 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 		 * @param requirePushedAuthorizationRequests the Token Introspection endpoint
 		 * @return the {@link Builder} for further configuration
 		 */
-		public Builder
-		requirePushedAuthorizationRequests(Boolean requirePushedAuthorizationRequests) {
+		public Builder requirePushedAuthorizationRequests(Boolean requirePushedAuthorizationRequests) {
 			return setting(ConfigurationSettingNames.AuthorizationServer.REQUIRE_PUSHED_AUTHORIZATION_REQUEST, requirePushedAuthorizationRequests);
+		}
+
+		public Builder enableFAPI() {
+			return setting(ConfigurationSettingNames.AuthorizationServer.FAPI_ENABLED, true);
 		}
 
 		/**
@@ -281,7 +294,6 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 		public AuthorizationServerSettings build() {
 			return new AuthorizationServerSettings(getSettings());
 		}
-
 	}
 
 }
