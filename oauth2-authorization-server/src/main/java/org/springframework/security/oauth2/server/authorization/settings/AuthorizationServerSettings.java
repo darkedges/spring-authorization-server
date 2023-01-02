@@ -15,7 +15,6 @@
  */
 package org.springframework.security.oauth2.server.authorization.settings;
 
-import org.springframework.security.oauth2.server.authorization.OAuth2PushedAuthorizationRequest;
 import org.springframework.util.Assert;
 
 import java.util.Map;
@@ -161,7 +160,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	 * @return the Auth 2.0 TLS Client Certificate Bound Access Tokens value
 	 */
 	public boolean getTlsClientCertificateBoundAccessTokens() {
-		return getSetting(ConfigurationSettingNames.AuthorizationServer.TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS)!=null?getSetting(ConfigurationSettingNames.AuthorizationServer.TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS):false;
+		return getSetting(ConfigurationSettingNames.AuthorizationServer.TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS) != null ? getSetting(ConfigurationSettingNames.AuthorizationServer.TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS) : false;
 	}
 
 	/**
@@ -170,7 +169,7 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	 * @return the Auth 2.0 TLS Client Certificate Bound Access Tokens value
 	 */
 	public boolean isFAPIEnabled() {
-		return getSetting(ConfigurationSettingNames.AuthorizationServer.FAPI_ENABLED)!=null?getSetting(ConfigurationSettingNames.AuthorizationServer.FAPI_ENABLED):false;
+		return getSetting(ConfigurationSettingNames.AuthorizationServer.FAPI_ENABLED) != null ? getSetting(ConfigurationSettingNames.AuthorizationServer.FAPI_ENABLED) : false;
 	}
 
 	/**

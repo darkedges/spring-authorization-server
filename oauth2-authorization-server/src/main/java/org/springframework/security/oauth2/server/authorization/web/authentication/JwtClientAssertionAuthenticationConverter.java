@@ -15,11 +15,8 @@
  */
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
-import java.util.Map;
-
 import com.darkedges.fapi.FAPIUtil;
 import jakarta.servlet.http.HttpServletRequest;
-
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -32,15 +29,17 @@ import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
+import java.util.Map;
+
 /**
  * Attempts to extract a JWT client assertion credential from {@link HttpServletRequest}
  * and then converts to an {@link OAuth2ClientAuthenticationToken} used for authenticating the client.
  *
  * @author Rafal Lewczuk
- * @since 0.2.2
  * @see AuthenticationConverter
  * @see OAuth2ClientAuthenticationToken
  * @see OAuth2ClientAuthenticationFilter
+ * @since 0.2.2
  */
 public final class JwtClientAssertionAuthenticationConverter implements AuthenticationConverter {
 	private static final ClientAuthenticationMethod JWT_CLIENT_ASSERTION_AUTHENTICATION_METHOD =
@@ -76,7 +75,7 @@ public final class JwtClientAssertionAuthenticationConverter implements Authenti
 		if (FAPIUtil.isEnabled()) {
 			clientId = FAPIUtil.getClientId(jwtAssertion);
 		} else {
-			 clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
+			clientId = parameters.getFirst(OAuth2ParameterNames.CLIENT_ID);
 			if (!StringUtils.hasText(clientId) ||
 					parameters.get(OAuth2ParameterNames.CLIENT_ID).size() != 1) {
 				throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_REQUEST);

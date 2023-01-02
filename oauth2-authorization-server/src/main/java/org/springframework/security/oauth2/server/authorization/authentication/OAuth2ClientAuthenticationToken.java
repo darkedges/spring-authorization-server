@@ -60,7 +60,7 @@ public class OAuth2ClientAuthenticationToken extends AbstractAuthenticationToken
 	public OAuth2ClientAuthenticationToken(String clientId, ClientAuthenticationMethod clientAuthenticationMethod,
 			@Nullable Object credentials, @Nullable Map<String, Object> additionalParameters) {
 		super(Collections.emptyList());
-		//Assert.hasText(clientId, "clientId cannot be empty");
+		Assert.hasText(clientId, "clientId cannot be empty");
 		Assert.notNull(clientAuthenticationMethod, "clientAuthenticationMethod cannot be null");
 		this.clientId = clientId;
 		this.registeredClient = null;
