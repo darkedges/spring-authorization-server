@@ -95,8 +95,6 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 				.authorizationEndpoint(asUrl(issuer, authorizationServerSettings.getAuthorizationEndpoint()))
 				.tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
 				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.pushedAuthorizationRequestEndpoint(asUrl(issuer, authorizationServerSettings.getPushedAuthorizationRequestEndpoint()))
-				.require_pushed_authorization_requests(authorizationServerSettings.getRequirePushedAuthorizationRequests())
 				.jwkSetUrl(asUrl(issuer, authorizationServerSettings.getJwkSetEndpoint()))
 				.userInfoEndpoint(asUrl(issuer, authorizationServerSettings.getOidcUserInfoEndpoint()))
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
@@ -109,7 +107,11 @@ public final class OidcProviderConfigurationEndpointFilter extends OncePerReques
 				.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.subjectType("public")
 				.idTokenSigningAlgorithm(SignatureAlgorithm.RS256.getName())
-				.scope(OidcScopes.OPENID);
+				.scope(OidcScopes.OPENID)
+				// Need to make these optional
+				.pushedAuthorizationRequestEndpoint(asUrl(issuer, authorizationServerSettings.getPushedAuthorizationRequestEndpoint()))
+				.require_pushed_authorization_requests(authorizationServerSettings.getRequirePushedAuthorizationRequests())
+				.tlsClientCertificateBoundAccessTokens(authorizationServerSettings.getTlsClientCertificateBoundAccessTokens());
 
 		this.providerConfigurationCustomizer.accept(providerConfiguration);
 

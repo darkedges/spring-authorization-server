@@ -16,26 +16,26 @@
 package org.springframework.security.oauth2.server.authorization.oidc;
 
 
-import java.net.URL;
-import java.util.List;
-
 import org.springframework.security.oauth2.core.ClaimAccessor;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationServerMetadataClaimAccessor;
 
+import java.net.URL;
+import java.util.List;
+
 /**
  * A {@link ClaimAccessor} for the "claims" that can be returned
  * in the OpenID Provider Configuration Response.
  *
  * @author Daniel Garnier-Moiroux
- * @since 0.1.0
  * @see ClaimAccessor
  * @see OAuth2AuthorizationServerMetadataClaimAccessor
  * @see OidcProviderMetadataClaimNames
  * @see OidcProviderConfiguration
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata">3. OpenID Provider Metadata</a>
+ * @since 0.1.0
  */
 public interface OidcProviderMetadataClaimAccessor extends OAuth2AuthorizationServerMetadataClaimAccessor {
 
@@ -56,6 +56,36 @@ public interface OidcProviderMetadataClaimAccessor extends OAuth2AuthorizationSe
 	 */
 	default List<String> getIdTokenSigningAlgorithms() {
 		return getClaimAsStringList(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED);
+	}
+
+	/**
+	 * Returns the claims supported for the {@link OidcIdToken ID Token}
+	 * to encode the claims in a {@link Jwt} {@code (claims_supported)}.
+	 *
+	 * @return the claims supported for the {@link OidcIdToken ID Token}
+	 */
+	default List<String> getClaimsNames() {
+		return getClaimAsStringList(OidcProviderMetadataClaimNames.CLAIMS_SUPPORTED);
+	}
+
+	/**
+	 * Returns the {@link JwsAlgorithm JWS} request object signing algorithms supported for the {@link OidcIdToken ID Token}
+	 * to encode the claims in a {@link Jwt} {@code (request_object_signing_alg_values_supported)}.
+	 *
+	 * @return the claims supported for the {@link OidcIdToken ID Token}
+	 */
+	default List<String> getRequestObjectSigningAlgorithms() {
+		return getClaimAsStringList(OidcProviderMetadataClaimNames.REQUEST_OBJECT_SIGNING_ALG_VALUES_SUPPORTED);
+	}
+
+	/**
+	 * Returns the {@link JwsAlgorithm JWS} token endpoint auth signing algorithms supported for the {@link OidcIdToken ID Token}
+	 * to encode the claims in a {@link Jwt} {@code (token_endpoint_auth_signing_alg_values_supported)}.
+	 *
+	 * @return he {@link JwsAlgorithm JWS} tokendendpoint auth algorithms supported for the {@link OidcIdToken ID Token}
+	 */
+	default List<String> getTokenEndpointAuthSigningAlgorithms() {
+		return getClaimAsStringList(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT_AUTH_SIGNING_ALG_VALUES_SUPPORTED);
 	}
 
 	/**

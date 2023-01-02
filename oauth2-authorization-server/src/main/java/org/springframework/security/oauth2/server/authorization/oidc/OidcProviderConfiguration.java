@@ -15,15 +15,15 @@
  */
 package org.springframework.security.oauth2.server.authorization.oidc;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
-
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.server.authorization.AbstractOAuth2AuthorizationServerMetadata;
 import org.springframework.util.Assert;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * A representation of an OpenID Provider Configuration Response,
@@ -32,10 +32,10 @@ import org.springframework.util.Assert;
  * The claims are defined by the OpenID Connect Discovery 1.0 specification.
  *
  * @author Daniel Garnier-Moiroux
- * @since 0.1.0
  * @see AbstractOAuth2AuthorizationServerMetadata
  * @see OidcProviderMetadataClaimAccessor
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderConfigurationResponse">4.2. OpenID Provider Configuration Response</a>
+ * @since 0.1.0
  */
 public final class OidcProviderConfiguration extends AbstractOAuth2AuthorizationServerMetadata
 		implements OidcProviderMetadataClaimAccessor {
@@ -128,6 +128,78 @@ public final class OidcProviderConfiguration extends AbstractOAuth2Authorization
 		 */
 		public Builder userInfoEndpoint(String userInfoEndpoint) {
 			return claim(OidcProviderMetadataClaimNames.USER_INFO_ENDPOINT, userInfoEndpoint);
+		}
+
+		/**
+		 * Add this claim to the collection of {@code claims_supported}
+		 * in the resulting {@link OidcProviderConfiguration}, REQUIRED.
+		 *
+		 * @param claimName the claim for the {@link OidcIdToken ID Token}
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder claimName(String claimName) {
+			addClaimToClaimList(OidcProviderMetadataClaimNames.CLAIMS_SUPPORTED, claimName);
+			return this;
+		}
+
+		/**
+		 * A {@code Consumer} of the {@link JwsAlgorithm JWS} signing algorithms for the {@link OidcIdToken ID Token}
+		 * allowing the ability to add, replace, or remove.
+		 *
+		 * @param claimsNames a {@code Consumer} claims for the {@link OidcIdToken ID Token}
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder claimsNames(Consumer<List<String>> claimsNames) {
+			acceptClaimValues(OidcProviderMetadataClaimNames.CLAIMS_SUPPORTED, claimsNames);
+			return this;
+		}
+
+		/**
+		 * Add this {@link JwsAlgorithm JWS} signing algorithm to the collection of {@code request_object_signing_alg_values_supported}
+		 * in the resulting {@link OidcProviderConfiguration}, REQUIRED.
+		 *
+		 * @param requestObjectSigningAlgorithm the {@link JwsAlgorithm JWS} request object signing algorithm supported for the {@link OidcIdToken ID Token}
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder requestObjectSigningAlgorithm(String requestObjectSigningAlgorithm) {
+			addClaimToClaimList(OidcProviderMetadataClaimNames.REQUEST_OBJECT_SIGNING_ALG_VALUES_SUPPORTED, requestObjectSigningAlgorithm);
+			return this;
+		}
+
+		/**
+		 * A {@code Consumer} of the {@link JwsAlgorithm JWS} request object signing algorithms for the {@link OidcIdToken ID Token}
+		 * allowing the ability to add, replace, or remove.
+		 *
+		 * @param requestObjectSigningAlgorithms a {@code Consumer} of the {@link JwsAlgorithm JWS} signing algorithms for the {@link OidcIdToken ID Token}
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder requestObjectSigningAlgorithms(Consumer<List<String>> requestObjectSigningAlgorithms) {
+			acceptClaimValues(OidcProviderMetadataClaimNames.REQUEST_OBJECT_SIGNING_ALG_VALUES_SUPPORTED, requestObjectSigningAlgorithms);
+			return this;
+		}
+
+		/**
+		 * A {@code Consumer} of the {@link JwsAlgorithm JWS} token endpoint auth signing algorithms for the {@link OidcIdToken ID Token}
+		 * allowing the ability to add, replace, or remove.
+		 *
+		 * @param tokenEndpointAuthSigningAlgorithms a {@code Consumer} of the {@link JwsAlgorithm JWS} token endpoint auth signing algorithms for the {@link OidcIdToken ID Token}
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder tokenEndpointAuthSigningAlgorithms(Consumer<List<String>> tokenEndpointAuthSigningAlgorithms) {
+			acceptClaimValues(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT_AUTH_SIGNING_ALG_VALUES_SUPPORTED, tokenEndpointAuthSigningAlgorithms);
+			return this;
+		}
+
+		/**
+		 * Add this {@link JwsAlgorithm JWS} signing algorithm to the collection of {@code request_object_signing_alg_values_supported}
+		 * in the resulting {@link OidcProviderConfiguration}, REQUIRED.
+		 *
+		 * @param tokenEndpointAuthSigningAlgorithm the {@link JwsAlgorithm JWS} request object signing algorithm supported for the {@link OidcIdToken ID Token}
+		 * @return the {@link Builder} for further configuration
+		 */
+		public Builder tokenEndpointAuthSigningAlgorithm(String tokenEndpointAuthSigningAlgorithm) {
+			addClaimToClaimList(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT_AUTH_SIGNING_ALG_VALUES_SUPPORTED, tokenEndpointAuthSigningAlgorithm);
+			return this;
 		}
 
 		/**

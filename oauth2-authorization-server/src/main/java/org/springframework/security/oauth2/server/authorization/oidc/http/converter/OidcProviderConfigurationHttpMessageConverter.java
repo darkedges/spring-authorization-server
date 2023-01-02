@@ -150,6 +150,9 @@ public class OidcProviderConfigurationHttpMessageConverter
 			claimConverters.put(OidcProviderMetadataClaimNames.SUBJECT_TYPES_SUPPORTED, collectionStringConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.ID_TOKEN_SIGNING_ALG_VALUES_SUPPORTED, collectionStringConverter);
 			claimConverters.put(OidcProviderMetadataClaimNames.SCOPES_SUPPORTED, collectionStringConverter);
+			claimConverters.put(OidcProviderMetadataClaimNames.CLAIMS_SUPPORTED, collectionStringConverter);
+			claimConverters.put(OidcProviderMetadataClaimNames.TOKEN_ENDPOINT_AUTH_SIGNING_ALG_VALUES_SUPPORTED, collectionStringConverter);
+			claimConverters.put(OidcProviderMetadataClaimNames.REQUEST_OBJECT_SIGNING_ALG_VALUES_SUPPORTED, collectionStringConverter);
 			this.claimTypeConverter = new ClaimTypeConverter(claimConverters);
 		}
 

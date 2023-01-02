@@ -79,6 +79,15 @@ public interface OAuth2AuthorizationServerMetadataClaimAccessor extends ClaimAcc
 	}
 
 	/**
+	 * Returns the {@code boolean} of the TLS Client Certificate Bound Access Tokens {@code (tls_client_certificate_bound_access_tokens)}.
+	 *
+	 * @return the {@code boolean} of the TLS Client Certificate Bound Access Token
+	 */
+	default URL getTlsClientCertificateBoundAccessTokens() {
+		return getClaimAsURL(OAuth2AuthorizationServerMetadataClaimNames.TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS);
+	}
+
+	/**
 	 * Returns the {@code URL} of the Pushed Authorization Request Endpoint {@code (pushed_authorization_request_endpoint)}.
 	 *
 	 * @return the {@code URL} of the Pushed Authorization Request Endpoint

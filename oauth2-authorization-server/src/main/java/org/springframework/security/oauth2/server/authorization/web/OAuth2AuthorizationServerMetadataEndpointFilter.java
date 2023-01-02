@@ -94,8 +94,6 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 				.tokenEndpoint(asUrl(issuer, authorizationServerSettings.getTokenEndpoint()))
 				.tokenEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.jwkSetUrl(asUrl(issuer, authorizationServerSettings.getJwkSetEndpoint()))
-				.pushedAuthorizationRequestEndpoint(asUrl(issuer, authorizationServerSettings.getPushedAuthorizationRequestEndpoint()))
-				.require_pushed_authorization_requests(authorizationServerSettings.getRequirePushedAuthorizationRequests())
 				.responseType(OAuth2AuthorizationResponseType.CODE.getValue())
 				.grantType(AuthorizationGrantType.AUTHORIZATION_CODE.getValue())
 				.grantType(AuthorizationGrantType.CLIENT_CREDENTIALS.getValue())
@@ -104,7 +102,11 @@ public final class OAuth2AuthorizationServerMetadataEndpointFilter extends OnceP
 				.tokenRevocationEndpointAuthenticationMethods(clientAuthenticationMethods())
 				.tokenIntrospectionEndpoint(asUrl(issuer, authorizationServerSettings.getTokenIntrospectionEndpoint()))
 				.tokenIntrospectionEndpointAuthenticationMethods(clientAuthenticationMethods())
-				.codeChallengeMethod("S256");
+				.codeChallengeMethod("S256")
+				// Need to make these optional
+				.pushedAuthorizationRequestEndpoint(asUrl(issuer, authorizationServerSettings.getPushedAuthorizationRequestEndpoint()))
+				.require_pushed_authorization_requests(authorizationServerSettings.getRequirePushedAuthorizationRequests())
+				.tlsClientCertificateBoundAccessTokens(authorizationServerSettings.getTlsClientCertificateBoundAccessTokens());
 
 		this.authorizationServerMetadataCustomizer.accept(authorizationServerMetadata);
 

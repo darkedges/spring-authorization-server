@@ -127,7 +127,10 @@ public final class ConfigurationSettingNames {
 		 * Set the OpenID Connect 1.0 UserInfo endpoint.
 		 */
 		public static final String OIDC_USER_INFO_ENDPOINT = AUTHORIZATION_SERVER_SETTINGS_NAMESPACE.concat("oidc-user-info-endpoint");
-
+		/**
+		 * Set the OAuth 2.0 TLS Client Certificate Bound Access Tokens value.
+		 */
+		public static final String TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS = SETTINGS_NAMESPACE.concat("tls-client-certificate-bound-access-tokens");
 		private AuthorizationServer() {
 		}
 

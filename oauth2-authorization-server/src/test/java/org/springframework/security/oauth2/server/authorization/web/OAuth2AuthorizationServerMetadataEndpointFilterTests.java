@@ -93,6 +93,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 		String jwkSetEndpoint = "/oauth2/v1/jwks";
 		String tokenRevocationEndpoint = "/oauth2/v1/revoke";
 		String tokenIntrospectionEndpoint = "/oauth2/v1/introspect";
+		String pushedAuthorizationRequestEndpoint = "/oauth2/v1/par";
 
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder()
 				.issuer(issuer)
@@ -101,6 +102,7 @@ public class OAuth2AuthorizationServerMetadataEndpointFilterTests {
 				.jwkSetEndpoint(jwkSetEndpoint)
 				.tokenRevocationEndpoint(tokenRevocationEndpoint)
 				.tokenIntrospectionEndpoint(tokenIntrospectionEndpoint)
+				.pushedAuthorizationRequestEndpoint(pushedAuthorizationRequestEndpoint)
 				.build();
 		AuthorizationServerContextHolder.setContext(new TestAuthorizationServerContext(authorizationServerSettings, null));
 

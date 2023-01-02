@@ -155,6 +155,15 @@ public final class AuthorizationServerSettings extends AbstractSettings {
 	}
 
 	/**
+	 * Returns the OAuth 2.0 TLS Client Certificate Bound Access Tokens value. The default is {@code /oauth2/token}.
+	 *
+	 * @return the Pushed Authorization Request endpoint
+	 */
+	public boolean getTlsClientCertificateBoundAccessTokens() {
+		return getSetting(ConfigurationSettingNames.AuthorizationServer.TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS)!=null?getSetting(ConfigurationSettingNames.AuthorizationServer.TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS):false;
+	}
+
+	/**
 	 * A builder for {@link AuthorizationServerSettings}.
 	 */
 	public final static class Builder extends AbstractBuilder<AuthorizationServerSettings, Builder> {

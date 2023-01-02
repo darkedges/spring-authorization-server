@@ -24,9 +24,9 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
  * in the OpenID Provider Configuration Response.
  *
  * @author Daniel Garnier-Moiroux
- * @since 0.1.0
  * @see OAuth2AuthorizationServerMetadataClaimNames
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata">3. OpenID Provider Metadata</a>
+ * @since 0.1.0
  */
 public final class OidcProviderMetadataClaimNames extends OAuth2AuthorizationServerMetadataClaimNames {
 
@@ -42,9 +42,28 @@ public final class OidcProviderMetadataClaimNames extends OAuth2AuthorizationSer
 
 	/**
 	 * {@code userinfo_endpoint} - the {@code URL} of the OpenID Connect 1.0 UserInfo Endpoint
+	 *
 	 * @since 0.2.2
 	 */
 	public static final String USER_INFO_ENDPOINT = "userinfo_endpoint";
+	/**
+	 * {@code claims_supported} - the claims supported for the {@link OidcIdToken ID Token}
+	 *
+	 * @since 1.0.0
+	 */
+	public static final String CLAIMS_SUPPORTED = "claims_supported";
+	/**
+	 * {@code request_object_signing_alg_values_supported} - the {@link JwsAlgorithm JWS} request object signing algorithms supported for the {@link OidcIdToken ID Token}
+	 *
+	 * @since 1.0.0
+	 */
+	public static final String REQUEST_OBJECT_SIGNING_ALG_VALUES_SUPPORTED = "request_object_signing_alg_values_supported";
+	/**
+	 * {@code token_endpoint_auth_signing_alg_values_supported} - the {@link JwsAlgorithm JWS} token endpoint auth signing algorithms supported for the {@link OidcIdToken ID Token}
+	 *
+	 * @since 1.0.0
+	 */
+	public static final String TOKEN_ENDPOINT_AUTH_SIGNING_ALG_VALUES_SUPPORTED = "token_endpoint_auth_signing_alg_values_supported";
 
 	private OidcProviderMetadataClaimNames() {
 	}

@@ -137,10 +137,6 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverter
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.AUTHORIZATION_ENDPOINT, urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT, urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.TOKEN_ENDPOINT_AUTH_METHODS_SUPPORTED, collectionStringConverter);
-			if (false) {
-				claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT, urlConverter);
-				claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.REQUIRE_PUSHED_AUTHORIZATION_REQUESTS, booleanConverter);
-			}
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.JWKS_URI, urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.SCOPES_SUPPORTED, collectionStringConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.RESPONSE_TYPES_SUPPORTED, collectionStringConverter);
@@ -150,6 +146,10 @@ public class OAuth2AuthorizationServerMetadataHttpMessageConverter
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT, urlConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.INTROSPECTION_ENDPOINT_AUTH_METHODS_SUPPORTED, collectionStringConverter);
 			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.CODE_CHALLENGE_METHODS_SUPPORTED, collectionStringConverter);
+			// need to make these optional
+			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.PUSHED_AUTHORIZATION_REQUEST_ENDPOINT, urlConverter);
+			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.REQUIRE_PUSHED_AUTHORIZATION_REQUESTS, booleanConverter);
+			claimConverters.put(OAuth2AuthorizationServerMetadataClaimNames.TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS, booleanConverter);
 			this.claimTypeConverter = new ClaimTypeConverter(claimConverters);
 		}
 

@@ -20,9 +20,9 @@ package org.springframework.security.oauth2.server.authorization;
  * used in OAuth 2.0 Authorization Server Metadata and OpenID Connect Discovery 1.0.
  *
  * @author Daniel Garnier-Moiroux
- * @since 0.1.1
  * @see <a target="_blank" href="https://tools.ietf.org/html/rfc8414#section-2">2. Authorization Server Metadata</a>
  * @see <a target="_blank" href="https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata">3. OpenID Provider Metadata</a>
+ * @since 0.1.1
  */
 public class OAuth2AuthorizationServerMetadataClaimNames {
 
@@ -54,7 +54,7 @@ public class OAuth2AuthorizationServerMetadataClaimNames {
 	/**
 	 * {@code require_pushed_authorization_requests} - require OAuth 2.0 Pushed Authorization Request Endpoint
 	 */
-	public static final String REQUIRE_PUSHED_AUTHORIZATION_REQUESTS ="require_pushed_authorization_requests";
+	public static final String REQUIRE_PUSHED_AUTHORIZATION_REQUESTS = "require_pushed_authorization_requests";
 
 	/**
 	 * {@code jwks_uri} - the {@code URL} of the JSON Web Key Set
@@ -98,6 +98,7 @@ public class OAuth2AuthorizationServerMetadataClaimNames {
 
 	/**
 	 * {@code registration_endpoint} - the {@code URL} of the OAuth 2.0 Dynamic Client Registration Endpoint
+	 *
 	 * @since 0.4.0
 	 */
 	public static final String REGISTRATION_ENDPOINT = "registration_endpoint";
@@ -106,6 +107,11 @@ public class OAuth2AuthorizationServerMetadataClaimNames {
 	 * {@code code_challenge_methods_supported} - the Proof Key for Code Exchange (PKCE) {@code code_challenge_method} values supported
 	 */
 	public static final String CODE_CHALLENGE_METHODS_SUPPORTED = "code_challenge_methods_supported";
+
+	/**
+	 * {@code tls_client_certificate_bound_access_tokens} - the TLS Client Certificate Bound Access Tokens supported
+	 */
+	public static final String TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS = "tls_client_certificate_bound_access_tokens";
 
 	protected OAuth2AuthorizationServerMetadataClaimNames() {
 	}

@@ -150,6 +150,16 @@ public abstract class AbstractOAuth2AuthorizationServerMetadata implements OAuth
 		}
 
 		/**
+		 * Use this {@code If you can launch a tls_client_certificate_bound_access_tokens} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, OPTIONAL.
+		 *
+		 * @param tlsClientCertificateBoundAccessTokens the {@code URL} of the OAuth 2.0 TLS Client Certificate Bound Access Tokens
+		 * @return the {@link AbstractBuilder} for further configuration
+		 */
+		public B tlsClientCertificateBoundAccessTokens(boolean tlsClientCertificateBoundAccessTokens) {
+			return claim(OAuth2AuthorizationServerMetadataClaimNames.TLS_CLIENT_CERTIFICATE_BOUND_ACCESS_TOKENS, tlsClientCertificateBoundAccessTokens);
+		}
+
+		/**
 		 * Use this {@code require_pushed_authorization_requests} in the resulting {@link AbstractOAuth2AuthorizationServerMetadata}, REQUIRED.
 		 *
 		 * @param require_pushed_authorization_requests are OAuth 2.0 Pushed Authorization Requests required
