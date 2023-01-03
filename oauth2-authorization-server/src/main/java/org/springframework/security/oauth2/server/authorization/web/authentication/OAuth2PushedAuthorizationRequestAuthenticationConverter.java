@@ -131,20 +131,22 @@ public final class OAuth2PushedAuthorizationRequestAuthenticationConverter imple
 		String responseType = jwtAssertion.getClaimAsString(OAuth2ParameterNames.RESPONSE_TYPE);
 		if (!StringUtils.hasText(responseType)) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.RESPONSE_TYPE);
-		} else if (!responseType.equals(OAuth2AuthorizationResponseType.CODE.getValue())) {
+		} else if (!responseType.contains(OAuth2AuthorizationResponseType.CODE.getValue())) {
 			throwError(OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE, OAuth2ParameterNames.RESPONSE_TYPE);
 		}
 
-		// code_challenge (REQUIRED for public clients) - RFC 7636 (PKCE)
-		String codeChallenge = jwtAssertion.getClaimAsString(PkceParameterNames.CODE_CHALLENGE);
-		if (!StringUtils.hasText(codeChallenge)) {
-			throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE, PKCE_ERROR_URI);
-		}
+		if (registeredClient.getClientSettings().isRequireProofKey()) {
+			// code_challenge (REQUIRED for public clients) - RFC 7636 (PKCE)
+			String codeChallenge = jwtAssertion.getClaimAsString(PkceParameterNames.CODE_CHALLENGE);
+			if (!StringUtils.hasText(codeChallenge)) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE, PKCE_ERROR_URI);
+			}
 
-		// code_challenge_method (OPTIONAL for public clients) - RFC 7636 (PKCE)
-		String codeChallengeMethod = jwtAssertion.getClaimAsString(PkceParameterNames.CODE_CHALLENGE_METHOD);
-		if (!StringUtils.hasText(codeChallengeMethod)) {
-			throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD, PKCE_ERROR_URI);
+			// code_challenge_method (OPTIONAL for public clients) - RFC 7636 (PKCE)
+			String codeChallengeMethod = jwtAssertion.getClaimAsString(PkceParameterNames.CODE_CHALLENGE_METHOD);
+			if (!StringUtils.hasText(codeChallengeMethod)) {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, PkceParameterNames.CODE_CHALLENGE_METHOD, PKCE_ERROR_URI);
+			}
 		}
 
 		// scope (REQUIRED)

@@ -138,6 +138,7 @@ public class OAuth2PushedAuthorizationRequestEndpointFilter extends OncePerReque
 				(OAuth2PushedAuthorizationRequestAuthenticationToken) authentication;
 		OAuth2PushedAuthorizationRequest pushedAuthorizationRequest = pushedAuthorizationRequestAuthentication.getRequestClaims();
 		ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
+		httpResponse.setStatusCode(HttpStatus.CREATED);
 		this.pushedAuthorizationRequestHttpResponseConverter.write(pushedAuthorizationRequest, null, httpResponse);
 	}
 
