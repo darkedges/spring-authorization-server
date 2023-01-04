@@ -15,32 +15,33 @@
  */
 package org.springframework.security.oauth2.server.authorization.web.authentication;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import jakarta.servlet.http.HttpServletRequest;
-
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Attempts to extract an Authorization Request from {@link HttpServletRequest}
@@ -48,10 +49,10 @@ import org.springframework.util.StringUtils;
  * an {@link OAuth2AuthorizationCodeRequestAuthenticationToken} used for authenticating the request.
  *
  * @author Joe Grandja
- * @since 0.1.2
  * @see AuthenticationConverter
  * @see OAuth2AuthorizationCodeRequestAuthenticationToken
  * @see OAuth2AuthorizationEndpointFilter
+ * @since 0.1.2
  */
 public final class OAuth2AuthorizationCodeRequestAuthenticationConverter implements AuthenticationConverter {
 	private static final String DEFAULT_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1";
@@ -60,20 +61,77 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 			"anonymous", "anonymousUser", AuthorityUtils.createAuthorityList("ROLE_ANONYMOUS"));
 	private static final RequestMatcher OIDC_REQUEST_MATCHER = createOidcRequestMatcher();
 
+	private static final OAuth2TokenType REQUEST_TOKEN_TYPE =
+			new OAuth2TokenType(com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST);
+	private final OAuth2AuthorizationService authorizationService;
+
+	public OAuth2AuthorizationCodeRequestAuthenticationConverter(OAuth2AuthorizationService authorizationService) {
+		this.authorizationService = authorizationService;
+	}
+
+	private static RequestMatcher createOidcRequestMatcher() {
+		RequestMatcher postMethodMatcher = request -> "POST".equals(request.getMethod());
+		RequestMatcher responseTypeParameterMatcher = request ->
+				request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE) != null;
+		RequestMatcher openidScopeMatcher = request -> {
+			String scope = request.getParameter(OAuth2ParameterNames.SCOPE);
+			return StringUtils.hasText(scope) && scope.contains(OidcScopes.OPENID);
+		};
+		return new AndRequestMatcher(
+				postMethodMatcher, responseTypeParameterMatcher, openidScopeMatcher);
+	}
+
+	private static void throwError(String errorCode, String parameterName) {
+		throwError(errorCode, parameterName, DEFAULT_ERROR_URI);
+	}
+
+	private static void throwError(String errorCode, String parameterName, String errorUri) {
+		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, errorUri);
+		throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, null);
+	}
+
 	@Override
 	public Authentication convert(HttpServletRequest request) {
+		System.out.println("convert");
 		if (!"GET".equals(request.getMethod()) && !OIDC_REQUEST_MATCHER.matches(request)) {
 			return null;
 		}
 
 		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
 
+		// request_uri (OPTIONAL)
+		String requestUri = request.getParameter(com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST_URI);
+		if (StringUtils.hasText(requestUri) &&
+				parameters.get(com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST_URI).size() != 1) {
+			throwError(OAuth2ErrorCodes.INVALID_REQUEST, com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST_URI);
+		}
+		if (StringUtils.hasText(requestUri) && !requestUri.startsWith(com.darkedges.org.springframework.security.oauth2.core.RedirectUriMethod.URN)) {
+			throwError(com.darkedges.org.springframework.security.oauth2.core.OAuth2ErrorCodes.UNSUPPORTED_REQUEST_URI, com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST_URI);
+		}
+		MultiValueMap<String, String> pushedAuthenticationRequestParameters = new LinkedMultiValueMap<>();
+		if (StringUtils.hasText(requestUri)) {
+			OAuth2Authorization token = this.authorizationService.findByToken(requestUri, REQUEST_TOKEN_TYPE);
+			OAuth2AuthorizationRequest authorizationRequest = token.getAttribute(OAuth2AuthorizationRequest.class.getName());
+			if (authorizationRequest != null) {
+				authorizationRequest.getAdditionalParameters().forEach((key, value) -> pushedAuthenticationRequestParameters.put(key, Collections.singletonList(value.toString())));
+			} else {
+				throwError(OAuth2ErrorCodes.INVALID_REQUEST, com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST);
+			}
+		}
+
+		System.out.println("parameters:                            "+parameters);
+		System.out.println("pushedAuthenticationRequestParameters: "+pushedAuthenticationRequestParameters);
+		for(MultiValueMap.Entry<String, List<String>> entry: pushedAuthenticationRequestParameters.entrySet()){
+			parameters.merge(entry.getKey(), entry.getValue(), (v1, v2) -> v1);
+		}
+		System.out.println("parameters:                            "+parameters);
+
 		// response_type (REQUIRED)
 		String responseType = request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE);
 		if (!StringUtils.hasText(responseType) ||
 				parameters.get(OAuth2ParameterNames.RESPONSE_TYPE).size() != 1) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.RESPONSE_TYPE);
-		} else if (!responseType.equals(OAuth2AuthorizationResponseType.CODE.getValue())) {
+		} else if (!responseType.equals(com.darkedges.org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType.CODE_ID_TOKEN.getValue())) {
 			throwError(OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE, OAuth2ParameterNames.RESPONSE_TYPE);
 		}
 
@@ -92,7 +150,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 		}
 
 		// redirect_uri (OPTIONAL)
-		String redirectUri = parameters.getFirst(OAuth2ParameterNames.REDIRECT_URI);
+		String redirectUri =  parameters.getFirst(OAuth2ParameterNames.REDIRECT_URI);
 		if (StringUtils.hasText(redirectUri) &&
 				parameters.get(OAuth2ParameterNames.REDIRECT_URI).size() != 1) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI);
@@ -144,27 +202,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 
 		return new OAuth2AuthorizationCodeRequestAuthenticationToken(authorizationUri, clientId, principal,
 				redirectUri, state, scopes, additionalParameters);
-	}
-
-	private static RequestMatcher createOidcRequestMatcher() {
-		RequestMatcher postMethodMatcher = request -> "POST".equals(request.getMethod());
-		RequestMatcher responseTypeParameterMatcher = request ->
-				request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE) != null;
-		RequestMatcher openidScopeMatcher = request -> {
-			String scope = request.getParameter(OAuth2ParameterNames.SCOPE);
-			return StringUtils.hasText(scope) && scope.contains(OidcScopes.OPENID);
-		};
-		return new AndRequestMatcher(
-				postMethodMatcher, responseTypeParameterMatcher, openidScopeMatcher);
-	}
-
-	private static void throwError(String errorCode, String parameterName) {
-		throwError(errorCode, parameterName, DEFAULT_ERROR_URI);
-	}
-
-	private static void throwError(String errorCode, String parameterName, String errorUri) {
-		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, errorUri);
-		throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, null);
 	}
 
 }

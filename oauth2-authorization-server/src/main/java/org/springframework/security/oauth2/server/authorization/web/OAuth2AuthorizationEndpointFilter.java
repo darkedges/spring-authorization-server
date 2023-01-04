@@ -42,6 +42,7 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
@@ -92,6 +93,7 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	private static final String DEFAULT_AUTHORIZATION_ENDPOINT_URI = "/oauth2/authorize";
 
 	private final AuthenticationManager authenticationManager;
+	private final OAuth2AuthorizationService authorizationService;
 	private final RequestMatcher authorizationEndpointMatcher;
 	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
 	private AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new WebAuthenticationDetailsSource();
@@ -100,13 +102,14 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	private AuthenticationFailureHandler authenticationFailureHandler = this::sendErrorResponse;
 	private String consentPage;
 
+
 	/**
 	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.
 	 *
 	 * @param authenticationManager the authentication manager
 	 */
-	public OAuth2AuthorizationEndpointFilter(AuthenticationManager authenticationManager) {
-		this(authenticationManager, DEFAULT_AUTHORIZATION_ENDPOINT_URI);
+	public OAuth2AuthorizationEndpointFilter(AuthenticationManager authenticationManager,OAuth2AuthorizationService authorizationService) {
+		this(authenticationManager, authorizationService, DEFAULT_AUTHORIZATION_ENDPOINT_URI);
 	}
 
 	/**
@@ -115,14 +118,16 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	 * @param authenticationManager the authentication manager
 	 * @param authorizationEndpointUri the endpoint {@code URI} for authorization requests
 	 */
-	public OAuth2AuthorizationEndpointFilter(AuthenticationManager authenticationManager, String authorizationEndpointUri) {
+	public OAuth2AuthorizationEndpointFilter(AuthenticationManager authenticationManager, OAuth2AuthorizationService authorizationService, String authorizationEndpointUri) {
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
+		Assert.notNull(authorizationService, "authorizationService cannot be null");
 		Assert.hasText(authorizationEndpointUri, "authorizationEndpointUri cannot be empty");
 		this.authenticationManager = authenticationManager;
+		this.authorizationService = authorizationService;
 		this.authorizationEndpointMatcher = createDefaultRequestMatcher(authorizationEndpointUri);
 		this.authenticationConverter = new DelegatingAuthenticationConverter(
 				Arrays.asList(
-						new OAuth2AuthorizationCodeRequestAuthenticationConverter(),
+						new OAuth2AuthorizationCodeRequestAuthenticationConverter(authorizationService),
 						new OAuth2AuthorizationConsentAuthenticationConverter()));
 	}
 

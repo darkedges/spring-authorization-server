@@ -25,8 +25,9 @@ import java.io.Serializable;
  * @since 1.0.0
  */
 public class RedirectUriMethod implements Serializable {
+	public static final String URN = "urn:ietf:params:oauth:request_uri";
 
-	public static final RedirectUriMethod REQUEST_URI = new RedirectUriMethod("urn:ietf:params:oauth:request_uri");
+	public static final RedirectUriMethod REQUEST_URI = new RedirectUriMethod(URN);
 
 	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
 

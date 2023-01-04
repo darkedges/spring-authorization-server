@@ -38,9 +38,10 @@ public class OAuth2PushedAuthorizationRequestGenerator implements OAuth2TokenGen
 	@Nullable
 	@Override
 	public OAuth2RequestUri generate(OAuth2TokenContext context) {
-
+		System.out.println(context.getTokenType().getValue());
+		System.out.println(com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST);
 		if (context.getTokenType() == null ||
-				!OAuth2ParameterNames.CODE.equals(context.getTokenType().getValue())) {
+				!com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST.equals(context.getTokenType().getValue())) {
 			return null;
 		}
 		Instant issuedAt = Instant.now();

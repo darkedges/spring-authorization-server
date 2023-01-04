@@ -88,7 +88,7 @@ public class OAuth2PushedAuthorizationRequestAuthenticationProvider implements A
 				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest);
 	}
 
-	private static OAuth2TokenContext createAuthorizationCodeTokenContext(
+	private static OAuth2TokenContext createPushedAuthorizationRequestTokenContext(
 			OAuth2PushedAuthorizationRequestAuthenticationToken PushedAuthorizationRequestAuthentication,
 			RegisteredClient registeredClient, OAuth2Authorization authorization, Set<String> authorizedScopes) {
 
@@ -97,7 +97,7 @@ public class OAuth2PushedAuthorizationRequestAuthenticationProvider implements A
 				.registeredClient(registeredClient)
 				.principal((Authentication) PushedAuthorizationRequestAuthentication.getPrincipal())
 				.authorizationServerContext(AuthorizationServerContextHolder.getContext())
-				.tokenType(new OAuth2TokenType(OAuth2ParameterNames.CODE))
+				.tokenType(new OAuth2TokenType(com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST))
 				.authorizedScopes(authorizedScopes)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrant(PushedAuthorizationRequestAuthentication);
@@ -240,12 +240,12 @@ public class OAuth2PushedAuthorizationRequestAuthenticationProvider implements A
 				.additionalParameters(pushedAuthorizationRequestAuthentication.getAdditionalParameters())
 				.build();
 
-		OAuth2TokenContext tokenContext = createAuthorizationCodeTokenContext(
+		OAuth2TokenContext tokenContext = createPushedAuthorizationRequestTokenContext(
 				pushedAuthorizationRequestAuthentication, registeredClient, null, authorizationRequest.getScopes());
 		OAuth2RequestUri requestUri = this.pushedAuthorizationRequestGenerator.generate(tokenContext);
 		if (requestUri == null) {
 			OAuth2Error error = new OAuth2Error(OAuth2ErrorCodes.SERVER_ERROR,
-					"The token generator failed to generate the authorization code.", ERROR_URI);
+					"The token generator failed to generate the request uri.", ERROR_URI);
 			throw new OAuth2PushedAuthorizationRequestAuthenticationException(error, null);
 		}
 
@@ -256,6 +256,7 @@ public class OAuth2PushedAuthorizationRequestAuthenticationProvider implements A
 				.authorizedScopes(authorizationRequest.getScopes())
 				.token(requestUri)
 				.build();
+		System.out.println("requestUri.getTokenValue(): "+requestUri.getTokenValue());
 		this.authorizationService.save(authorization);
 
 		if (this.logger.isTraceEnabled()) {

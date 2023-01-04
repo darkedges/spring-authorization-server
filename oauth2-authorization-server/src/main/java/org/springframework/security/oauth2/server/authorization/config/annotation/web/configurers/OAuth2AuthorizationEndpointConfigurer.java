@@ -228,8 +228,9 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 		OAuth2AuthorizationEndpointFilter authorizationEndpointFilter =
 				new OAuth2AuthorizationEndpointFilter(
 						authenticationManager,
+						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity),
 						authorizationServerSettings.getAuthorizationEndpoint());
-		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters();
+		List<AuthenticationConverter> authenticationConverters = createDefaultAuthenticationConverters(httpSecurity);
 		if (!this.authorizationRequestConverters.isEmpty()) {
 			authenticationConverters.addAll(0, this.authorizationRequestConverters);
 		}
@@ -253,10 +254,10 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 		return this.requestMatcher;
 	}
 
-	private static List<AuthenticationConverter> createDefaultAuthenticationConverters() {
+	private static List<AuthenticationConverter> createDefaultAuthenticationConverters(HttpSecurity httpSecurity) {
 		List<AuthenticationConverter> authenticationConverters = new ArrayList<>();
 
-		authenticationConverters.add(new OAuth2AuthorizationCodeRequestAuthenticationConverter());
+		authenticationConverters.add(new OAuth2AuthorizationCodeRequestAuthenticationConverter(OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity)));
 		authenticationConverters.add(new OAuth2AuthorizationConsentAuthenticationConverter());
 
 		return authenticationConverters;

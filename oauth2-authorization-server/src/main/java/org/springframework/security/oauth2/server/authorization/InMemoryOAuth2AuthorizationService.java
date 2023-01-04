@@ -98,8 +98,10 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	public void save(OAuth2Authorization authorization) {
 		Assert.notNull(authorization, "authorization cannot be null");
 		if (isComplete(authorization)) {
+			System.out.println("save: authorizations: "+authorization);
 			this.authorizations.put(authorization.getId(), authorization);
 		} else {
+			System.out.println("save: initializedAuthorizations: "+authorization);
 			this.initializedAuthorizations.put(authorization.getId(), authorization);
 		}
 	}
@@ -146,6 +148,9 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 	}
 
 	private static boolean hasToken(OAuth2Authorization authorization, String token, @Nullable OAuth2TokenType tokenType) {
+		System.out.println("authorization: "+authorization);
+		System.out.println("token:         "+token);
+		System.out.println("tokenType:     "+tokenType.getValue());
 		if (tokenType == null) {
 			return matchesState(authorization, token) ||
 					matchesAuthorizationCode(authorization, token) ||
@@ -155,6 +160,8 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 			return matchesState(authorization, token);
 		} else if (OAuth2ParameterNames.CODE.equals(tokenType.getValue())) {
 			return matchesAuthorizationCode(authorization, token);
+		} else if (com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST.equals(tokenType.getValue())) {
+			return matchesRequestUri(authorization, token);
 		} else if (OAuth2TokenType.ACCESS_TOKEN.equals(tokenType)) {
 			return matchesAccessToken(authorization, token);
 		} else if (OAuth2TokenType.REFRESH_TOKEN.equals(tokenType)) {
@@ -171,6 +178,15 @@ public final class InMemoryOAuth2AuthorizationService implements OAuth2Authoriza
 		OAuth2Authorization.Token<OAuth2AuthorizationCode> authorizationCode =
 				authorization.getToken(OAuth2AuthorizationCode.class);
 		return authorizationCode != null && authorizationCode.getToken().getTokenValue().equals(token);
+	}
+
+	private static boolean matchesRequestUri(OAuth2Authorization authorization, String token) {
+		System.out.println("matchesRequestUri: "+authorization);
+		System.out.println("matchesRequestUri: "+token);
+		OAuth2Authorization.Token<OAuth2RequestUri> requestUri =
+				authorization.getToken(OAuth2RequestUri.class);
+		System.out.println("matchesRequestUri: "+requestUri.getToken().getTokenValue());
+		return requestUri != null && requestUri.getToken().getTokenValue().equals(token);
 	}
 
 	private static boolean matchesAccessToken(OAuth2Authorization authorization, String token) {

@@ -97,6 +97,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+		System.out.println("authenticate");
 		OAuth2AuthorizationCodeAuthenticationToken authorizationCodeAuthentication =
 				(OAuth2AuthorizationCodeAuthenticationToken) authentication;
 
