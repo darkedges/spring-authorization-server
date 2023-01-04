@@ -15,24 +15,13 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
-import java.nio.charset.StandardCharsets;
-import java.text.MessageFormat;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.function.Consumer;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -49,6 +38,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationToken;
@@ -60,15 +50,21 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.util.StringUtils;
 
+import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Consumer;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.same;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for {@link OAuth2AuthorizationEndpointFilter}.
@@ -86,14 +82,59 @@ public class OAuth2AuthorizationEndpointFilterTests {
 	private static final String STATE = "state";
 	private static final String REMOTE_ADDRESS = "remote-address";
 	private AuthenticationManager authenticationManager;
+	private OAuth2AuthorizationService authenticationService;
 	private OAuth2AuthorizationEndpointFilter filter;
 	private TestingAuthenticationToken principal;
 	private OAuth2AuthorizationCode authorizationCode;
 
+	private static MockHttpServletRequest createAuthorizationRequest(RegisteredClient registeredClient) {
+		String requestUri = DEFAULT_AUTHORIZATION_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
+		request.setServletPath(requestUri);
+		request.setRemoteAddr(REMOTE_ADDRESS);
+
+		request.addParameter(OAuth2ParameterNames.RESPONSE_TYPE, OAuth2AuthorizationResponseType.CODE.getValue());
+		request.addParameter(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
+		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, registeredClient.getRedirectUris().iterator().next());
+		request.addParameter(OAuth2ParameterNames.SCOPE,
+				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
+		request.addParameter(OAuth2ParameterNames.STATE, "state");
+
+		return request;
+	}
+
+	private static MockHttpServletRequest createAuthorizationConsentRequest(RegisteredClient registeredClient) {
+		String requestUri = DEFAULT_AUTHORIZATION_ENDPOINT_URI;
+		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
+		request.setServletPath(requestUri);
+		request.setRemoteAddr(REMOTE_ADDRESS);
+
+		request.addParameter(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
+		registeredClient.getScopes().forEach((scope) -> request.addParameter(OAuth2ParameterNames.SCOPE, scope));
+		request.addParameter(OAuth2ParameterNames.STATE, "state");
+
+		return request;
+	}
+
+	private static String scopeCheckbox(String scope) {
+		return MessageFormat.format(
+				"<input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"{0}\" id=\"{0}\">",
+				scope
+		);
+	}
+
+	private static String disabledScopeCheckbox(String scope) {
+		return MessageFormat.format(
+				"<input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" id=\"{0}\" checked disabled>",
+				scope
+		);
+	}
+
 	@BeforeEach
 	public void setUp() {
 		this.authenticationManager = mock(AuthenticationManager.class);
-		this.filter = new OAuth2AuthorizationEndpointFilter(this.authenticationManager);
+		this.authenticationService = mock(OAuth2AuthorizationService.class);
+		this.filter = new OAuth2AuthorizationEndpointFilter(this.authenticationManager, this.authenticationService);
 		this.principal = new TestingAuthenticationToken("principalName", "password");
 		this.principal.setAuthenticated(true);
 		SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
@@ -111,14 +152,14 @@ public class OAuth2AuthorizationEndpointFilterTests {
 
 	@Test
 	public void constructorWhenAuthenticationManagerNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2AuthorizationEndpointFilter(null))
+		assertThatThrownBy(() -> new OAuth2AuthorizationEndpointFilter(null, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("authenticationManager cannot be null");
 	}
 
 	@Test
 	public void constructorWhenAuthorizationEndpointUriNullThenThrowIllegalArgumentException() {
-		assertThatThrownBy(() -> new OAuth2AuthorizationEndpointFilter(this.authenticationManager, null))
+		assertThatThrownBy(() -> new OAuth2AuthorizationEndpointFilter(this.authenticationManager, this.authenticationService, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("authorizationEndpointUri cannot be empty");
 	}
@@ -443,7 +484,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2AuthorizationConsentAuthenticationToken authorizationConsentAuthenticationResult =
 				new OAuth2AuthorizationConsentAuthenticationToken(
 						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
-						STATE, new HashSet<>(), null);	// No scopes previously approved
+						STATE, new HashSet<>(), null);    // No scopes previously approved
 		authorizationConsentAuthenticationResult.setAuthenticated(true);
 		when(this.authenticationManager.authenticate(any()))
 				.thenReturn(authorizationConsentAuthenticationResult);
@@ -474,7 +515,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 		OAuth2AuthorizationConsentAuthenticationToken authorizationConsentAuthenticationResult =
 				new OAuth2AuthorizationConsentAuthenticationToken(
 						AUTHORIZATION_URI, registeredClient.getClientId(), principal,
-						STATE, new HashSet<>(), null);	// No scopes previously approved
+						STATE, new HashSet<>(), null);    // No scopes previously approved
 		authorizationConsentAuthenticationResult.setAuthenticated(true);
 		when(this.authenticationManager.authenticate(any()))
 				.thenReturn(authorizationConsentAuthenticationResult);
@@ -581,7 +622,7 @@ public class OAuth2AuthorizationEndpointFilterTests {
 				.thenReturn(authorizationCodeRequestAuthenticationResult);
 
 		MockHttpServletRequest request = createAuthorizationRequest(registeredClient);
-		request.setMethod("POST");	// OpenID Connect supports POST method
+		request.setMethod("POST");    // OpenID Connect supports POST method
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -621,49 +662,6 @@ public class OAuth2AuthorizationEndpointFilterTests {
 
 		assertThat(response.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
 		assertThat(response.getErrorMessage()).isEqualTo("[" + errorCode + "] OAuth 2.0 Parameter: " + parameterName);
-	}
-
-	private static MockHttpServletRequest createAuthorizationRequest(RegisteredClient registeredClient) {
-		String requestUri = DEFAULT_AUTHORIZATION_ENDPOINT_URI;
-		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
-		request.setServletPath(requestUri);
-		request.setRemoteAddr(REMOTE_ADDRESS);
-
-		request.addParameter(OAuth2ParameterNames.RESPONSE_TYPE, OAuth2AuthorizationResponseType.CODE.getValue());
-		request.addParameter(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
-		request.addParameter(OAuth2ParameterNames.REDIRECT_URI, registeredClient.getRedirectUris().iterator().next());
-		request.addParameter(OAuth2ParameterNames.SCOPE,
-				StringUtils.collectionToDelimitedString(registeredClient.getScopes(), " "));
-		request.addParameter(OAuth2ParameterNames.STATE, "state");
-
-		return request;
-	}
-
-	private static MockHttpServletRequest createAuthorizationConsentRequest(RegisteredClient registeredClient) {
-		String requestUri = DEFAULT_AUTHORIZATION_ENDPOINT_URI;
-		MockHttpServletRequest request = new MockHttpServletRequest("POST", requestUri);
-		request.setServletPath(requestUri);
-		request.setRemoteAddr(REMOTE_ADDRESS);
-
-		request.addParameter(OAuth2ParameterNames.CLIENT_ID, registeredClient.getClientId());
-		registeredClient.getScopes().forEach((scope) -> request.addParameter(OAuth2ParameterNames.SCOPE, scope));
-		request.addParameter(OAuth2ParameterNames.STATE, "state");
-
-		return request;
-	}
-
-	private static String scopeCheckbox(String scope) {
-		return MessageFormat.format(
-				"<input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" value=\"{0}\" id=\"{0}\">",
-				scope
-		);
-	}
-
-	private static String disabledScopeCheckbox(String scope) {
-		return MessageFormat.format(
-				"<input class=\"form-check-input\" type=\"checkbox\" name=\"scope\" id=\"{0}\" checked disabled>",
-				scope
-		);
 	}
 
 }

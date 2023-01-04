@@ -24,4 +24,5 @@ public class OAuth2ErrorCodes {
 	public static final String INVALID_REQUEST = "invalid_request";
 
 	public static final String UNSUPPORTED_REQUEST_URI = "unsupported_request_uri";
+
 }

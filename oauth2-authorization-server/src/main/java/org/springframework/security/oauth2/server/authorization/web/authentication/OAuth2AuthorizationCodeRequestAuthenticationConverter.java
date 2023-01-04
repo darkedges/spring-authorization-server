@@ -23,6 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -145,7 +146,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 		if (!StringUtils.hasText(responseType) ||
 				parameters.get(OAuth2ParameterNames.RESPONSE_TYPE).size() != 1) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.RESPONSE_TYPE);
-		} else if (!responseType.equals(com.darkedges.org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType.CODE_ID_TOKEN.getValue())) {
+		} else if (!responseType.equals(OAuth2AuthorizationResponseType.CODE.getValue()) && !responseType.equals(com.darkedges.org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType.CODE_ID_TOKEN.getValue())) {
 			throwError(OAuth2ErrorCodes.UNSUPPORTED_RESPONSE_TYPE, OAuth2ParameterNames.RESPONSE_TYPE);
 		}
 

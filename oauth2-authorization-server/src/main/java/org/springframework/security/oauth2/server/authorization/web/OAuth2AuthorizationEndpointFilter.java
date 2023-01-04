@@ -15,19 +15,10 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import org.springframework.core.log.LogMessage;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -43,11 +34,7 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResp
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.*;
 import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationCodeRequestAuthenticationConverter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.OAuth2AuthorizationConsentAuthenticationConverter;
@@ -59,15 +46,15 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.security.web.util.RedirectUrlBuilder;
 import org.springframework.security.web.util.UrlUtils;
-import org.springframework.security.web.util.matcher.AndRequestMatcher;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
-import org.springframework.security.web.util.matcher.OrRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.security.web.util.matcher.*;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 /**
  * A {@code Filter} for the OAuth 2.0 Authorization Code Grant,
@@ -78,13 +65,13 @@ import org.springframework.web.util.UriComponentsBuilder;
  * @author Daniel Garnier-Moiroux
  * @author Anoop Garlapati
  * @author Dmitriy Dubson
- * @since 0.0.1
  * @see AuthenticationManager
  * @see OAuth2AuthorizationCodeRequestAuthenticationProvider
  * @see OAuth2AuthorizationConsentAuthenticationProvider
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1">Section 4.1 Authorization Code Grant</a>
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1">Section 4.1.1 Authorization Request</a>
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2">Section 4.1.2 Authorization Response</a>
+ * @since 0.0.1
  */
 public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilter {
 	/**
@@ -108,14 +95,14 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 	 *
 	 * @param authenticationManager the authentication manager
 	 */
-	public OAuth2AuthorizationEndpointFilter(AuthenticationManager authenticationManager,OAuth2AuthorizationService authorizationService) {
+	public OAuth2AuthorizationEndpointFilter(AuthenticationManager authenticationManager, OAuth2AuthorizationService authorizationService) {
 		this(authenticationManager, authorizationService, DEFAULT_AUTHORIZATION_ENDPOINT_URI);
 	}
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationEndpointFilter} using the provided parameters.
 	 *
-	 * @param authenticationManager the authentication manager
+	 * @param authenticationManager    the authentication manager
 	 * @param authorizationEndpointUri the endpoint {@code URI} for authorization requests
 	 */
 	public OAuth2AuthorizationEndpointFilter(AuthenticationManager authenticationManager, OAuth2AuthorizationService authorizationService, String authorizationEndpointUri) {
