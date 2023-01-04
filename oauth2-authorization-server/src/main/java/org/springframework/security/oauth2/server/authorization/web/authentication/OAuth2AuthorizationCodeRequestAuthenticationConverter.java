@@ -28,20 +28,20 @@ import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2RequestUri;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.web.authentication.AuthenticationConverter;
 import org.springframework.security.web.util.matcher.AndRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Attempts to extract an Authorization Request from {@link HttpServletRequest}
@@ -92,12 +92,15 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 
 	@Override
 	public Authentication convert(HttpServletRequest request) {
-		System.out.println("convert");
 		if (!"GET".equals(request.getMethod()) && !OIDC_REQUEST_MATCHER.matches(request)) {
 			return null;
 		}
 
 		MultiValueMap<String, String> parameters = OAuth2EndpointUtils.getParameters(request);
+		Authentication principal = SecurityContextHolder.getContext().getAuthentication();
+		if (principal == null) {
+			principal = ANONYMOUS_AUTHENTICATION;
+		}
 
 		// request_uri (OPTIONAL)
 		String requestUri = request.getParameter(com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST_URI);
@@ -108,23 +111,34 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 		if (StringUtils.hasText(requestUri) && !requestUri.startsWith(com.darkedges.org.springframework.security.oauth2.core.RedirectUriMethod.URN)) {
 			throwError(com.darkedges.org.springframework.security.oauth2.core.OAuth2ErrorCodes.UNSUPPORTED_REQUEST_URI, com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST_URI);
 		}
+		// Need to clean this up
+		// need to work out a better way to restore the Token with the correct values.
+		// this is a hack till a better solution can be found
 		MultiValueMap<String, String> pushedAuthenticationRequestParameters = new LinkedMultiValueMap<>();
-		if (StringUtils.hasText(requestUri)) {
+		if (StringUtils.hasText(requestUri) && principal != ANONYMOUS_AUTHENTICATION) {
 			OAuth2Authorization token = this.authorizationService.findByToken(requestUri, REQUEST_TOKEN_TYPE);
-			OAuth2AuthorizationRequest authorizationRequest = token.getAttribute(OAuth2AuthorizationRequest.class.getName());
-			if (authorizationRequest != null) {
-				authorizationRequest.getAdditionalParameters().forEach((key, value) -> pushedAuthenticationRequestParameters.put(key, Collections.singletonList(value.toString())));
+			if (token != null) {
+				OAuth2AuthorizationRequest authorizationRequest = token.getAttribute(OAuth2AuthorizationRequest.class.getName());
+				if (authorizationRequest != null) {
+					OAuth2Authorization.Token<OAuth2RequestUri> requestUri2 = token.getToken(OAuth2RequestUri.class);
+					if (!requestUri2.isInvalidated()) {
+						authorizationRequest.getAdditionalParameters().forEach((key, value) -> pushedAuthenticationRequestParameters.put(key, Collections.singletonList(value.toString())));
+						// Invalidate the request_uri as it can only be used once
+						token = OAuth2AuthenticationProviderUtils.invalidate(token, requestUri2.getToken());
+						this.authorizationService.save(token);
+					} else {
+						throwError(OAuth2ErrorCodes.INVALID_REQUEST, com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST);
+					}
+				} else {
+					throwError(OAuth2ErrorCodes.INVALID_REQUEST, com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST);
+				}
 			} else {
 				throwError(OAuth2ErrorCodes.INVALID_REQUEST, com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST);
 			}
 		}
-
-		System.out.println("parameters:                            "+parameters);
-		System.out.println("pushedAuthenticationRequestParameters: "+pushedAuthenticationRequestParameters);
-		for(MultiValueMap.Entry<String, List<String>> entry: pushedAuthenticationRequestParameters.entrySet()){
+		for (MultiValueMap.Entry<String, List<String>> entry : pushedAuthenticationRequestParameters.entrySet()) {
 			parameters.merge(entry.getKey(), entry.getValue(), (v1, v2) -> v1);
 		}
-		System.out.println("parameters:                            "+parameters);
 
 		// response_type (REQUIRED)
 		String responseType = request.getParameter(OAuth2ParameterNames.RESPONSE_TYPE);
@@ -144,13 +158,8 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationConverter impleme
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.CLIENT_ID);
 		}
 
-		Authentication principal = SecurityContextHolder.getContext().getAuthentication();
-		if (principal == null) {
-			principal = ANONYMOUS_AUTHENTICATION;
-		}
-
 		// redirect_uri (OPTIONAL)
-		String redirectUri =  parameters.getFirst(OAuth2ParameterNames.REDIRECT_URI);
+		String redirectUri = parameters.getFirst(OAuth2ParameterNames.REDIRECT_URI);
 		if (StringUtils.hasText(redirectUri) &&
 				parameters.get(OAuth2ParameterNames.REDIRECT_URI).size() != 1) {
 			throwError(OAuth2ErrorCodes.INVALID_REQUEST, OAuth2ParameterNames.REDIRECT_URI);

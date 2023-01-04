@@ -256,7 +256,6 @@ public class OAuth2PushedAuthorizationRequestAuthenticationProvider implements A
 				.authorizedScopes(authorizationRequest.getScopes())
 				.token(requestUri)
 				.build();
-		System.out.println("requestUri.getTokenValue(): "+requestUri.getTokenValue());
 		this.authorizationService.save(authorization);
 
 		if (this.logger.isTraceEnabled()) {

@@ -15,27 +15,13 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import java.security.Principal;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.core.log.LogMessage;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
-import org.springframework.security.oauth2.core.ClaimAccessor;
-import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.OAuth2AccessToken;
-import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
-import org.springframework.security.oauth2.core.OAuth2Error;
-import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
-import org.springframework.security.oauth2.core.OAuth2RefreshToken;
-import org.springframework.security.oauth2.core.OAuth2Token;
+import org.springframework.security.oauth2.core.*;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
@@ -54,6 +40,11 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.security.Principal;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthenticationProviderUtils.getAuthenticatedClientElseThrowInvalidClient;
 
 /**
@@ -61,7 +52,6 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  *
  * @author Joe Grandja
  * @author Daniel Garnier-Moiroux
- * @since 0.0.1
  * @see OAuth2AuthorizationCodeAuthenticationToken
  * @see OAuth2AccessTokenAuthenticationToken
  * @see OAuth2AuthorizationCodeRequestAuthenticationProvider
@@ -69,6 +59,7 @@ import static org.springframework.security.oauth2.server.authorization.authentic
  * @see OAuth2TokenGenerator
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1">Section 4.1 Authorization Code Grant</a>
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3">Section 4.1.3 Access Token Request</a>
+ * @since 0.0.1
  */
 public final class OAuth2AuthorizationCodeAuthenticationProvider implements AuthenticationProvider {
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-5.2";
@@ -84,7 +75,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 	 * Constructs an {@code OAuth2AuthorizationCodeAuthenticationProvider} using the provided parameters.
 	 *
 	 * @param authorizationService the authorization service
-	 * @param tokenGenerator the token generator
+	 * @param tokenGenerator       the token generator
 	 * @since 0.2.3
 	 */
 	public OAuth2AuthorizationCodeAuthenticationProvider(OAuth2AuthorizationService authorizationService,
@@ -97,7 +88,6 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		System.out.println("authenticate");
 		OAuth2AuthorizationCodeAuthenticationToken authorizationCodeAuthentication =
 				(OAuth2AuthorizationCodeAuthenticationToken) authentication;
 
@@ -214,7 +204,7 @@ public final class OAuth2AuthorizationCodeAuthenticationProvider implements Auth
 			// @formatter:off
 			tokenContext = tokenContextBuilder
 					.tokenType(ID_TOKEN_TOKEN_TYPE)
-					.authorization(authorizationBuilder.build())	// ID token customizer may need access to the access token and/or refresh token
+					.authorization(authorizationBuilder.build())    // ID token customizer may need access to the access token and/or refresh token
 					.build();
 			// @formatter:on
 			OAuth2Token generatedIdToken = this.tokenGenerator.generate(tokenContext);

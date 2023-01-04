@@ -30,7 +30,7 @@ import org.springframework.security.oauth2.server.authorization.OAuth2Authorizat
  * @author Joe Grandja
  * @since 0.0.3
  */
-final class OAuth2AuthenticationProviderUtils {
+public final class OAuth2AuthenticationProviderUtils {
 
 	private OAuth2AuthenticationProviderUtils() {
 	}
@@ -46,7 +46,7 @@ final class OAuth2AuthenticationProviderUtils {
 		throw new OAuth2AuthenticationException(OAuth2ErrorCodes.INVALID_CLIENT);
 	}
 
-	static <T extends OAuth2Token> OAuth2Authorization invalidate(
+	public static <T extends OAuth2Token> OAuth2Authorization invalidate(
 			OAuth2Authorization authorization, T token) {
 
 		// @formatter:off

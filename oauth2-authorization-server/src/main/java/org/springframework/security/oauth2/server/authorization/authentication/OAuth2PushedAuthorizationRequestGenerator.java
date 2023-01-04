@@ -19,7 +19,6 @@ import com.darkedges.org.springframework.security.oauth2.core.RedirectUriMethod;
 import org.springframework.lang.Nullable;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
-import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2RequestUri;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenGenerator;
@@ -38,8 +37,6 @@ public class OAuth2PushedAuthorizationRequestGenerator implements OAuth2TokenGen
 	@Nullable
 	@Override
 	public OAuth2RequestUri generate(OAuth2TokenContext context) {
-		System.out.println(context.getTokenType().getValue());
-		System.out.println(com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST);
 		if (context.getTokenType() == null ||
 				!com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST.equals(context.getTokenType().getValue())) {
 			return null;
