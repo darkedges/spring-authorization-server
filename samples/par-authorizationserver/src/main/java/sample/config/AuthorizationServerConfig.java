@@ -15,104 +15,104 @@
  */
 package sample.config;
 
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.SecurityContext;
+import java.util.UUID;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
+import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
+import org.springframework.security.oauth2.jose.jws.JwsAlgorithms;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configuration.OAuth2AuthorizationServerConfiguration;
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
+import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
+
 import sample.jose.Jwks;
 
-import java.util.UUID;
-
-/**
- * @author Joe Grandja
- * @since 0.0.1
- */
 @Configuration(proxyBeanMethods = false)
 public class AuthorizationServerConfig {
+	@Bean
+	public RegisteredClientRepository registeredClientRepository() {
+		String jwkSetUri = "http://127.0.0.1:9000/resources";
+		ClientSettings clientSettings = ClientSettings.builder().requireProofKey(false)
+				.tokenEndpointAuthenticationSigningAlgorithm(SignatureAlgorithm.ES256).jwkSetUrl(jwkSetUri).build();
+		TokenSettings tokenSettings = TokenSettings.builder().build();
+		RegisteredClient registeredClient1 = RegisteredClient.withId(UUID.randomUUID().toString())
+				.clientId("a9fa0032-2177-4f7b-aae2-d2f7df486d99").clientSecret("")
+				.clientAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT)
+				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.redirectUri("http://127.0.0.1:8080/code")
+				.scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE).clientSettings(clientSettings)
+				.tokenSettings(tokenSettings).build();
+		RegisteredClient registeredClient2 = RegisteredClient.withId(UUID.randomUUID().toString())
+				.clientId("95efe06f-5e05-4d3c-b9a9-eabb49d054de").clientSecret("")
+				.clientAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT)
+				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.redirectUri("http://127.0.0.1:8080/code")
+				.scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE).clientSettings(clientSettings)
+				.tokenSettings(tokenSettings).build();
+
+		return new InMemoryRegisteredClientRepository(registeredClient1, registeredClient2);
+	}
 
 	@Bean
 	@Order(Ordered.HIGHEST_PRECEDENCE)
-	public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+	public SecurityFilterChain authServerSecurityFilterChain(HttpSecurity http) throws Exception {
 		OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
-		// @formatter:off
-		http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-				.oidc(Customizer.withDefaults()) // Enable OpenID Connect 1.0
-				.pushedAuthorizationRequestEndpoint(pushedAuthorizationRequestEndpoint ->
-						pushedAuthorizationRequestEndpoint.requirePushedAuthorizationRequests(true)
-				);
-
-		http
-				.exceptionHandling(exceptions ->
-						exceptions.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
-				)
-				.oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt);
-		// @formatter:on
-		return http.build();
-	}
-
-	// @formatter:off
-	@Bean
-	public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbcTemplate) {
-		RegisteredClient registeredClient = RegisteredClient.withId(UUID.randomUUID().toString())
-				.clientId("messaging-client")
-				.clientSecret("{noop}secret")
-				.clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
-				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
-				.redirectUri("http://127.0.0.1:8080/login/oauth2/code/messaging-client-oidc")
-				.redirectUri("http://127.0.0.1:8080/authorized")
-				.scope(OidcScopes.OPENID)
-				.scope(OidcScopes.PROFILE)
-				.scope("message.read")
-				.scope("message.write")
-				.clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
+		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder().enableFAPI()
 				.build();
-
-		// Save registered client in db as if in-memory
-		JdbcRegisteredClientRepository registeredClientRepository = new JdbcRegisteredClientRepository(jdbcTemplate);
-		registeredClientRepository.save(registeredClient);
-
-		return registeredClientRepository;
-	}
-	// @formatter:on
-
-	@Bean
-	public OAuth2AuthorizationService authorizationService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
-		return new JdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
-	}
-
-	@Bean
-	public OAuth2AuthorizationConsentService authorizationConsentService(JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
-		return new JdbcOAuth2AuthorizationConsentService(jdbcTemplate, registeredClientRepository);
+		http.formLogin(Customizer.withDefaults()).getConfigurer(OAuth2AuthorizationServerConfigurer.class)
+				.authorizationServerSettings(authorizationServerSettings).oidc(oidc -> {
+					oidc.providerConfigurationEndpoint(provider -> {
+						provider.providerConfigurationCustomizer(p -> {
+							p.tlsClientCertificateBoundAccessTokens(true);
+							p.responseTypes(responseTypes -> {
+								responseTypes.clear();
+								responseTypes.add("code id_token");
+							});
+							p.idTokenSigningAlgorithms(idTokenSigningAlgorithms -> {
+								idTokenSigningAlgorithms.clear();
+								idTokenSigningAlgorithms.add(JwsAlgorithms.ES256);
+								idTokenSigningAlgorithms.add(JwsAlgorithms.PS256);
+							});
+							p.requestObjectSigningAlgorithms(requestObjectSigningAlgorithms -> {
+								requestObjectSigningAlgorithms.clear();
+								requestObjectSigningAlgorithms.add(JwsAlgorithms.ES256);
+								requestObjectSigningAlgorithms.add(JwsAlgorithms.PS256);
+							});
+							p.tokenEndpointAuthSigningAlgorithms(tokenEndpointAuthSigningAlgorithms -> {
+								tokenEndpointAuthSigningAlgorithms.clear();
+								tokenEndpointAuthSigningAlgorithms.add(JwsAlgorithms.ES256);
+								tokenEndpointAuthSigningAlgorithms.add(JwsAlgorithms.PS256);
+							});
+							p.claimsNames(claimsNames -> {
+								claimsNames.clear();
+								claimsNames.add("acr");
+							});
+						});
+					});
+				});
+		return http.build();
 	}
 
 	@Bean
@@ -123,27 +123,7 @@ public class AuthorizationServerConfig {
 	}
 
 	@Bean
-	public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
-		return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
-	}
-
-	@Bean
 	public AuthorizationServerSettings authorizationServerSettings() {
 		return AuthorizationServerSettings.builder().build();
 	}
-
-	@Bean
-	public EmbeddedDatabase embeddedDatabase() {
-		// @formatter:off
-		return new EmbeddedDatabaseBuilder()
-				.generateUniqueName(true)
-				.setType(EmbeddedDatabaseType.H2)
-				.setScriptEncoding("UTF-8")
-				.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-schema.sql")
-				.addScript("org/springframework/security/oauth2/server/authorization/oauth2-authorization-consent-schema.sql")
-				.addScript("org/springframework/security/oauth2/server/authorization/client/oauth2-registered-client-schema.sql")
-				.build();
-		// @formatter:on
-	}
-
 }

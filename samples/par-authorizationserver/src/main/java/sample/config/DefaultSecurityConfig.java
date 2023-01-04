@@ -15,16 +15,23 @@
  */
 package sample.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationEventPublisher;
+import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
+import org.springframework.security.authentication.event.AuthenticationFailureBadCredentialsEvent;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
+import java.util.Collections;
 import static org.springframework.security.config.Customizer.withDefaults;
 
 /**
@@ -34,29 +41,39 @@ import static org.springframework.security.config.Customizer.withDefaults;
 @EnableWebSecurity
 @Configuration(proxyBeanMethods = false)
 public class DefaultSecurityConfig {
+	// Inject applicationEventPublisher
+	@Autowired
+	private ApplicationEventPublisher applicationEventPublisher;
 
-	// @formatter:off
 	@Bean
 	SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http) throws Exception {
-		http
-				.authorizeHttpRequests(authorize ->
-						authorize.anyRequest().authenticated()
-				)
-				.formLogin(withDefaults());
+		http.authorizeHttpRequests(authorize -> {
+			try {
+				authorize.requestMatchers("/resources").permitAll().and().authorizeHttpRequests().anyRequest()
+						.authenticated();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}).formLogin(withDefaults());
 		return http.build();
 	}
-	// @formatter:on
 
-	// @formatter:off
+	@Bean
+	AuthenticationEventPublisher eventPublisher(ApplicationEventPublisher application) {
+		AuthenticationEventPublisher authentication = new DefaultAuthenticationEventPublisher(application);
+		((DefaultAuthenticationEventPublisher) authentication).setAdditionalExceptionMappings(Collections
+				.singletonMap(OAuth2AuthenticationException.class, AuthenticationFailureBadCredentialsEvent.class));
+		return authentication;
+	}
+
 	@Bean
 	UserDetailsService users() {
 		UserDetails user = User.withDefaultPasswordEncoder()
-				.username("user1")
+				.username("admin")
 				.password("password")
 				.roles("USER")
 				.build();
 		return new InMemoryUserDetailsManager(user);
 	}
-	// @formatter:on
-
 }
