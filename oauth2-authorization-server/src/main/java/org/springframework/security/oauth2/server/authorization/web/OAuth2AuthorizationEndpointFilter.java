@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.web;
 
+import com.darkedges.fapi.FAPIUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -300,6 +301,9 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 		} else {
 			redirectUri = uriBuilder.toUriString();
 		}
+		if (FAPIUtil.isEnabled())
+			redirectUri = redirectUri.replaceFirst("\\?", "#");
+		System.out.println("redirectUri: "+redirectUri);
 		this.redirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 
