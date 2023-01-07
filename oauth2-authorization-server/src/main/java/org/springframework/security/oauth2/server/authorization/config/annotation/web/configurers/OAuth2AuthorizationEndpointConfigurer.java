@@ -15,12 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-
 import jakarta.servlet.http.HttpServletRequest;
-
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -28,13 +23,7 @@ import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponse;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationContext;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationException;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationValidator;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationProvider;
-import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationConsentAuthenticationToken;
+import org.springframework.security.oauth2.server.authorization.authentication.*;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.web.OAuth2AuthorizationEndpointFilter;
 import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter;
@@ -50,20 +39,26 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
 /**
  * Configurer for the OAuth 2.0 Authorization Endpoint.
  *
  * @author Joe Grandja
- * @since 0.1.2
  * @see OAuth2AuthorizationServerConfigurer#authorizationEndpoint
  * @see OAuth2AuthorizationEndpointFilter
+ * @since 0.1.2
  */
 public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2Configurer {
-	private RequestMatcher requestMatcher;
 	private final List<AuthenticationConverter> authorizationRequestConverters = new ArrayList<>();
-	private Consumer<List<AuthenticationConverter>> authorizationRequestConvertersConsumer = (authorizationRequestConverters) -> {};
 	private final List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
-	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {};
+	private RequestMatcher requestMatcher;
+	private Consumer<List<AuthenticationConverter>> authorizationRequestConvertersConsumer = (authorizationRequestConverters) -> {
+	};
+	private Consumer<List<AuthenticationProvider>> authenticationProvidersConsumer = (authenticationProviders) -> {
+	};
 	private AuthenticationSuccessHandler authorizationResponseHandler;
 	private AuthenticationFailureHandler errorResponseHandler;
 	private String consentPage;
@@ -74,6 +69,15 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 	 */
 	OAuth2AuthorizationEndpointConfigurer(ObjectPostProcessor<Object> objectPostProcessor) {
 		super(objectPostProcessor);
+	}
+
+	private static List<AuthenticationConverter> createDefaultAuthenticationConverters(HttpSecurity httpSecurity) {
+		List<AuthenticationConverter> authenticationConverters = new ArrayList<>();
+
+		authenticationConverters.add(new OAuth2AuthorizationCodeRequestAuthenticationConverter(OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity)));
+		authenticationConverters.add(new OAuth2AuthorizationConsentAuthenticationConverter());
+
+		return authenticationConverters;
 	}
 
 	/**
@@ -162,7 +166,7 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 	 * Specify the URI to redirect Resource Owners to if consent is required during
 	 * the {@code authorization_code} flow. A default consent page will be generated when
 	 * this attribute is not specified.
-	 *
+	 * <p>
 	 * If a URI is specified, applications are required to process the specified URI to generate
 	 * a consent page. The query string will contain the following parameters:
 	 *
@@ -171,7 +175,7 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 	 * <li>{@code scope} - a space-delimited list of scopes present in the authorization request</li>
 	 * <li>{@code state} - a CSRF protection token</li>
 	 * </ul>
-	 *
+	 * <p>
 	 * In general, the consent page should create a form that submits
 	 * a request with the following requirements:
 	 *
@@ -254,15 +258,6 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 		return this.requestMatcher;
 	}
 
-	private static List<AuthenticationConverter> createDefaultAuthenticationConverters(HttpSecurity httpSecurity) {
-		List<AuthenticationConverter> authenticationConverters = new ArrayList<>();
-
-		authenticationConverters.add(new OAuth2AuthorizationCodeRequestAuthenticationConverter(OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity)));
-		authenticationConverters.add(new OAuth2AuthorizationConsentAuthenticationConverter());
-
-		return authenticationConverters;
-	}
-
 	private List<AuthenticationProvider> createDefaultAuthenticationProviders(HttpSecurity httpSecurity) {
 		List<AuthenticationProvider> authenticationProviders = new ArrayList<>();
 
@@ -270,7 +265,8 @@ public final class OAuth2AuthorizationEndpointConfigurer extends AbstractOAuth2C
 				new OAuth2AuthorizationCodeRequestAuthenticationProvider(
 						OAuth2ConfigurerUtils.getRegisteredClientRepository(httpSecurity),
 						OAuth2ConfigurerUtils.getAuthorizationService(httpSecurity),
-						OAuth2ConfigurerUtils.getAuthorizationConsentService(httpSecurity));
+						OAuth2ConfigurerUtils.getAuthorizationConsentService(httpSecurity),
+						OAuth2ConfigurerUtils.getTokenGenerator(httpSecurity));
 		if (this.authorizationCodeRequestAuthenticationValidator != null) {
 			authorizationCodeRequestAuthenticationProvider.setAuthenticationValidator(
 					new OAuth2AuthorizationCodeRequestAuthenticationValidator()

@@ -60,7 +60,7 @@ public class AuthorizationServerConfig {
 				.clientAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.redirectUri("http://127.0.0.1:8080/code")
+				.redirectUri("https://www.certification.openid.net/test/a/darkedges/callback")
 				.scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE).clientSettings(clientSettings)
 				.tokenSettings(tokenSettings).build();
 		RegisteredClient registeredClient2 = RegisteredClient.withId(UUID.randomUUID().toString())
@@ -68,7 +68,7 @@ public class AuthorizationServerConfig {
 				.clientAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.redirectUri("http://127.0.0.1:8080/code")
+				.redirectUri("https://www.certification.openid.net/test/a/darkedges/callback")
 				.scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE).clientSettings(clientSettings)
 				.tokenSettings(tokenSettings).build();
 

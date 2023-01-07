@@ -34,6 +34,7 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
+import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.authentication.*;
 import org.springframework.security.oauth2.server.authorization.web.authentication.DelegatingAuthenticationConverter;
@@ -297,13 +298,17 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 			uriBuilder.queryParam(OAuth2ParameterNames.STATE, "{state}");
 			Map<String, String> queryParams = new HashMap<>();
 			queryParams.put(OAuth2ParameterNames.STATE, authorizationCodeRequestAuthentication.getState());
+			if (FAPIUtil.isEnabled()) {
+				uriBuilder.queryParam(OidcParameterNames.ID_TOKEN, "{id_token}");
+				queryParams.put(OidcParameterNames.ID_TOKEN, authorizationCodeRequestAuthentication.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN).toString());
+			}
 			redirectUri = uriBuilder.build(queryParams).toString();
+			System.out.println(redirectUri);
 		} else {
 			redirectUri = uriBuilder.toUriString();
 		}
 		if (FAPIUtil.isEnabled())
 			redirectUri = redirectUri.replaceFirst("\\?", "#");
-		System.out.println("redirectUri: "+redirectUri);
 		this.redirectStrategy.sendRedirect(request, response, redirectUri);
 	}
 

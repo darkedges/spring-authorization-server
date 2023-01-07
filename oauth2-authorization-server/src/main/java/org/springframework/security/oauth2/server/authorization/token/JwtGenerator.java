@@ -15,10 +15,7 @@
  */
 package org.springframework.security.oauth2.server.authorization.token;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-
+import com.darkedges.fapi.FAPIUtil;
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
@@ -29,24 +26,24 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
-import org.springframework.security.oauth2.jwt.JwsHeader;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtClaimsSet;
-import org.springframework.security.oauth2.jwt.JwtEncoder;
-import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
+import org.springframework.security.oauth2.server.authorization.OIDCTokenType;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+
 /**
  * An {@link OAuth2TokenGenerator} that generates a {@link Jwt}
  * used for an {@link OAuth2AccessToken} or {@link OidcIdToken}.
  *
  * @author Joe Grandja
- * @since 0.2.3
  * @see OAuth2TokenGenerator
  * @see Jwt
  * @see JwtEncoder
@@ -54,6 +51,7 @@ import org.springframework.util.StringUtils;
  * @see JwtEncodingContext
  * @see OAuth2AccessToken
  * @see OidcIdToken
+ * @since 0.2.3
  */
 public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 	private final JwtEncoder jwtEncoder;
@@ -74,7 +72,8 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 	public Jwt generate(OAuth2TokenContext context) {
 		if (context.getTokenType() == null ||
 				(!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType()) &&
-						!OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue()))) {
+						!OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())
+						|| (!OIDCTokenType.CODE.getValue().equals(context.getTokenType().getValue()) && FAPIUtil.isEnabled()))) {
 			return null;
 		}
 		if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType()) &&

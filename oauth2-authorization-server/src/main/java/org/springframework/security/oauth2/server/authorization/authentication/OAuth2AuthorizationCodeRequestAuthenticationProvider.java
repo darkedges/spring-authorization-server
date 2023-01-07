@@ -15,14 +15,9 @@
  */
 package org.springframework.security.oauth2.server.authorization.authentication;
 
-import java.security.Principal;
-import java.util.Base64;
-import java.util.Set;
-import java.util.function.Consumer;
-
+import com.darkedges.fapi.FAPIUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -32,16 +27,15 @@ import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
-import org.springframework.security.oauth2.server.authorization.OAuth2Authorization;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationCode;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
-import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
-import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
+import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.authorization.*;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.context.AuthorizationServerContextHolder;
@@ -51,13 +45,16 @@ import org.springframework.security.oauth2.server.authorization.token.OAuth2Toke
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.security.Principal;
+import java.util.*;
+import java.util.function.Consumer;
+
 /**
  * An {@link AuthenticationProvider} implementation for the OAuth 2.0 Authorization Request
  * used in the Authorization Code Grant.
  *
  * @author Joe Grandja
  * @author Steve Riesenberg
- * @since 0.1.2
  * @see OAuth2AuthorizationCodeRequestAuthenticationToken
  * @see OAuth2AuthorizationCodeRequestAuthenticationValidator
  * @see OAuth2AuthorizationCodeAuthenticationProvider
@@ -66,6 +63,7 @@ import org.springframework.util.StringUtils;
  * @see OAuth2AuthorizationService
  * @see OAuth2AuthorizationConsentService
  * @see <a target="_blank" href="https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1">Section 4.1.1 Authorization Request</a>
+ * @since 0.1.2
  */
 public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implements AuthenticationProvider {
 	private static final String ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.2.1";
@@ -80,21 +78,124 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	private Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator =
 			new OAuth2AuthorizationCodeRequestAuthenticationValidator();
 
+	private final OAuth2TokenGenerator<? extends OAuth2Token> idtokenGenerator;
+
 	/**
 	 * Constructs an {@code OAuth2AuthorizationCodeRequestAuthenticationProvider} using the provided parameters.
 	 *
-	 * @param registeredClientRepository the repository of registered clients
-	 * @param authorizationService the authorization service
+	 * @param registeredClientRepository  the repository of registered clients
+	 * @param authorizationService        the authorization service
 	 * @param authorizationConsentService the authorization consent service
+	 * @param idtokenGenerator              the token generator
 	 */
 	public OAuth2AuthorizationCodeRequestAuthenticationProvider(RegisteredClientRepository registeredClientRepository,
-			OAuth2AuthorizationService authorizationService, OAuth2AuthorizationConsentService authorizationConsentService) {
+			OAuth2AuthorizationService authorizationService, OAuth2AuthorizationConsentService authorizationConsentService,
+			OAuth2TokenGenerator<? extends OAuth2Token> idtokenGenerator) {
 		Assert.notNull(registeredClientRepository, "registeredClientRepository cannot be null");
 		Assert.notNull(authorizationService, "authorizationService cannot be null");
 		Assert.notNull(authorizationConsentService, "authorizationConsentService cannot be null");
+		Assert.notNull(idtokenGenerator, "idtokenGenerator cannot be null");
 		this.registeredClientRepository = registeredClientRepository;
 		this.authorizationService = authorizationService;
 		this.authorizationConsentService = authorizationConsentService;
+		this.idtokenGenerator = idtokenGenerator;
+	}
+
+	private static OAuth2Authorization.Builder authorizationBuilder(RegisteredClient registeredClient, Authentication principal,
+			OAuth2AuthorizationRequest authorizationRequest) {
+		return OAuth2Authorization.withRegisteredClient(registeredClient)
+				.principalName(principal.getName())
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.attribute(Principal.class.getName(), principal)
+				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest);
+	}
+
+	private static OAuth2TokenContext createAuthorizationCodeTokenContext(
+			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
+			RegisteredClient registeredClient, OAuth2Authorization authorization, Set<String> authorizedScopes) {
+
+		// @formatter:off
+		DefaultOAuth2TokenContext.Builder tokenContextBuilder = DefaultOAuth2TokenContext.builder()
+				.registeredClient(registeredClient)
+				.principal((Authentication) authorizationCodeRequestAuthentication.getPrincipal())
+				.authorizationServerContext(AuthorizationServerContextHolder.getContext())
+				.tokenType(new OAuth2TokenType(OAuth2ParameterNames.CODE))
+				.authorizedScopes(authorizedScopes)
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.authorizationGrant(authorizationCodeRequestAuthentication);
+		// @formatter:on
+
+		if (authorization != null) {
+			tokenContextBuilder.authorization(authorization);
+		}
+
+		return tokenContextBuilder.build();
+	}
+
+	private static boolean requireAuthorizationConsent(RegisteredClient registeredClient,
+			OAuth2AuthorizationRequest authorizationRequest, OAuth2AuthorizationConsent authorizationConsent) {
+
+		if (!registeredClient.getClientSettings().isRequireAuthorizationConsent()) {
+			return false;
+		}
+		// 'openid' scope does not require consent
+		if (authorizationRequest.getScopes().contains(OidcScopes.OPENID) &&
+				authorizationRequest.getScopes().size() == 1) {
+			return false;
+		}
+
+		return authorizationConsent == null ||
+				!authorizationConsent.getScopes().containsAll(authorizationRequest.getScopes());
+	}
+
+	private static boolean isPrincipalAuthenticated(Authentication principal) {
+		return principal != null &&
+				!AnonymousAuthenticationToken.class.isAssignableFrom(principal.getClass()) &&
+				principal.isAuthenticated();
+	}
+
+	private static void throwError(String errorCode, String parameterName,
+			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
+			RegisteredClient registeredClient) {
+		throwError(errorCode, parameterName, ERROR_URI, authorizationCodeRequestAuthentication, registeredClient, null);
+	}
+
+	private static void throwError(String errorCode, String parameterName, String errorUri,
+			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
+			RegisteredClient registeredClient, OAuth2AuthorizationRequest authorizationRequest) {
+		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, errorUri);
+		throwError(error, parameterName, authorizationCodeRequestAuthentication, registeredClient, authorizationRequest);
+	}
+
+	private static void throwError(OAuth2Error error, String parameterName,
+			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
+			RegisteredClient registeredClient, OAuth2AuthorizationRequest authorizationRequest) {
+
+		String redirectUri = resolveRedirectUri(authorizationRequest, registeredClient);
+		if (error.getErrorCode().equals(OAuth2ErrorCodes.INVALID_REQUEST) &&
+				(parameterName.equals(OAuth2ParameterNames.CLIENT_ID) ||
+						parameterName.equals(OAuth2ParameterNames.STATE))) {
+			redirectUri = null;        // Prevent redirects
+		}
+
+		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
+				new OAuth2AuthorizationCodeRequestAuthenticationToken(
+						authorizationCodeRequestAuthentication.getAuthorizationUri(), authorizationCodeRequestAuthentication.getClientId(),
+						(Authentication) authorizationCodeRequestAuthentication.getPrincipal(), redirectUri,
+						authorizationCodeRequestAuthentication.getState(), authorizationCodeRequestAuthentication.getScopes(),
+						authorizationCodeRequestAuthentication.getAdditionalParameters());
+
+		throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, authorizationCodeRequestAuthenticationResult);
+	}
+
+	private static String resolveRedirectUri(OAuth2AuthorizationRequest authorizationRequest, RegisteredClient registeredClient) {
+		if (authorizationRequest != null && StringUtils.hasText(authorizationRequest.getRedirectUri())) {
+			return authorizationRequest.getRedirectUri();
+		}
+		if (registeredClient != null) {
+			return registeredClient.getRedirectUris().iterator().next();
+		}
+		return null;
 	}
 
 	@Override
@@ -221,9 +322,27 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 			this.logger.trace("Authenticated authorization code request");
 		}
 
+		// ----- ID token -----
+		OidcIdToken idToken;
+		if (authorizationRequest.getScopes().contains(OidcScopes.OPENID) && FAPIUtil.isEnabled()) {
+			OAuth2Token generatedIdToken = this.idtokenGenerator.generate(tokenContext);
+			idToken = new OidcIdToken(generatedIdToken.getTokenValue(), generatedIdToken.getIssuedAt(),
+					generatedIdToken.getExpiresAt(), ((Jwt) generatedIdToken).getClaims());
+			if (this.logger.isTraceEnabled()) {
+				this.logger.trace("Generated id token");
+			}
+		} else {
+			idToken = null;
+		}
+		Map<String, Object> additionalParameters = Collections.emptyMap();
+		if (idToken != null) {
+			additionalParameters = new HashMap<>();
+			additionalParameters.put(OidcParameterNames.ID_TOKEN, idToken.getTokenValue());
+		}
+
 		return new OAuth2AuthorizationCodeRequestAuthenticationToken(authorizationRequest.getAuthorizationUri(),
 				registeredClient.getClientId(), principal, authorizationCode, redirectUri,
-				authorizationRequest.getState(), authorizationRequest.getScopes());
+				authorizationRequest.getState(), authorizationRequest.getScopes(), additionalParameters);
 	}
 
 	@Override
@@ -257,107 +376,6 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	public void setAuthenticationValidator(Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator) {
 		Assert.notNull(authenticationValidator, "authenticationValidator cannot be null");
 		this.authenticationValidator = authenticationValidator;
-	}
-
-	private static OAuth2Authorization.Builder authorizationBuilder(RegisteredClient registeredClient, Authentication principal,
-			OAuth2AuthorizationRequest authorizationRequest) {
-		return OAuth2Authorization.withRegisteredClient(registeredClient)
-				.principalName(principal.getName())
-				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.attribute(Principal.class.getName(), principal)
-				.attribute(OAuth2AuthorizationRequest.class.getName(), authorizationRequest);
-	}
-
-	private static OAuth2TokenContext createAuthorizationCodeTokenContext(
-			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
-			RegisteredClient registeredClient, OAuth2Authorization authorization, Set<String> authorizedScopes) {
-
-		// @formatter:off
-		DefaultOAuth2TokenContext.Builder tokenContextBuilder = DefaultOAuth2TokenContext.builder()
-				.registeredClient(registeredClient)
-				.principal((Authentication) authorizationCodeRequestAuthentication.getPrincipal())
-				.authorizationServerContext(AuthorizationServerContextHolder.getContext())
-				.tokenType(new OAuth2TokenType(OAuth2ParameterNames.CODE))
-				.authorizedScopes(authorizedScopes)
-				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.authorizationGrant(authorizationCodeRequestAuthentication);
-		// @formatter:on
-
-		if (authorization != null) {
-			tokenContextBuilder.authorization(authorization);
-		}
-
-		return tokenContextBuilder.build();
-	}
-
-	private static boolean requireAuthorizationConsent(RegisteredClient registeredClient,
-			OAuth2AuthorizationRequest authorizationRequest, OAuth2AuthorizationConsent authorizationConsent) {
-
-		if (!registeredClient.getClientSettings().isRequireAuthorizationConsent()) {
-			return false;
-		}
-		// 'openid' scope does not require consent
-		if (authorizationRequest.getScopes().contains(OidcScopes.OPENID) &&
-				authorizationRequest.getScopes().size() == 1) {
-			return false;
-		}
-
-		if (authorizationConsent != null &&
-				authorizationConsent.getScopes().containsAll(authorizationRequest.getScopes())) {
-			return false;
-		}
-
-		return true;
-	}
-
-	private static boolean isPrincipalAuthenticated(Authentication principal) {
-		return principal != null &&
-				!AnonymousAuthenticationToken.class.isAssignableFrom(principal.getClass()) &&
-				principal.isAuthenticated();
-	}
-
-	private static void throwError(String errorCode, String parameterName,
-			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
-			RegisteredClient registeredClient) {
-		throwError(errorCode, parameterName, ERROR_URI, authorizationCodeRequestAuthentication, registeredClient, null);
-	}
-
-	private static void throwError(String errorCode, String parameterName, String errorUri,
-			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
-			RegisteredClient registeredClient, OAuth2AuthorizationRequest authorizationRequest) {
-		OAuth2Error error = new OAuth2Error(errorCode, "OAuth 2.0 Parameter: " + parameterName, errorUri);
-		throwError(error, parameterName, authorizationCodeRequestAuthentication, registeredClient, authorizationRequest);
-	}
-
-	private static void throwError(OAuth2Error error, String parameterName,
-			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
-			RegisteredClient registeredClient, OAuth2AuthorizationRequest authorizationRequest) {
-
-		String redirectUri = resolveRedirectUri(authorizationRequest, registeredClient);
-		if (error.getErrorCode().equals(OAuth2ErrorCodes.INVALID_REQUEST) &&
-				(parameterName.equals(OAuth2ParameterNames.CLIENT_ID) ||
-						parameterName.equals(OAuth2ParameterNames.STATE))) {
-			redirectUri = null;		// Prevent redirects
-		}
-
-		OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthenticationResult =
-				new OAuth2AuthorizationCodeRequestAuthenticationToken(
-						authorizationCodeRequestAuthentication.getAuthorizationUri(), authorizationCodeRequestAuthentication.getClientId(),
-						(Authentication) authorizationCodeRequestAuthentication.getPrincipal(), redirectUri,
-						authorizationCodeRequestAuthentication.getState(), authorizationCodeRequestAuthentication.getScopes(),
-						authorizationCodeRequestAuthentication.getAdditionalParameters());
-
-		throw new OAuth2AuthorizationCodeRequestAuthenticationException(error, authorizationCodeRequestAuthenticationResult);
-	}
-
-	private static String resolveRedirectUri(OAuth2AuthorizationRequest authorizationRequest, RegisteredClient registeredClient) {
-		if (authorizationRequest != null && StringUtils.hasText(authorizationRequest.getRedirectUri())) {
-			return authorizationRequest.getRedirectUri();
-		}
-		if (registeredClient != null) {
-			return registeredClient.getRedirectUris().iterator().next();
-		}
-		return null;
 	}
 
 }

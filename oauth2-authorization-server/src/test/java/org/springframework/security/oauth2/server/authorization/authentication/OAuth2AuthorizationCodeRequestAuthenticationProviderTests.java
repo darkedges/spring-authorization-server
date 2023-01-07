@@ -31,6 +31,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
+import org.springframework.security.oauth2.core.OAuth2Token;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
@@ -72,6 +73,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	private OAuth2AuthorizationConsentService authorizationConsentService;
 	private OAuth2AuthorizationCodeRequestAuthenticationProvider authenticationProvider;
 	private TestingAuthenticationToken principal;
+	private  OAuth2TokenGenerator<? extends OAuth2Token> tokenGenerator;
 
 	@BeforeEach
 	public void setUp() {
@@ -79,7 +81,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
 		this.authorizationConsentService = mock(OAuth2AuthorizationConsentService.class);
 		this.authenticationProvider = new OAuth2AuthorizationCodeRequestAuthenticationProvider(
-				this.registeredClientRepository, this.authorizationService, this.authorizationConsentService);
+				this.registeredClientRepository, this.authorizationService, this.authorizationConsentService, this.tokenGenerator);
 		this.principal = new TestingAuthenticationToken("principalName", "password");
 		this.principal.setAuthenticated(true);
 		AuthorizationServerSettings authorizationServerSettings = AuthorizationServerSettings.builder().issuer("https://provider.com").build();
@@ -89,7 +91,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void constructorWhenRegisteredClientRepositoryNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> new OAuth2AuthorizationCodeRequestAuthenticationProvider(
-				null, this.authorizationService, this.authorizationConsentService))
+				null, this.authorizationService, this.authorizationConsentService, this.tokenGenerator))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("registeredClientRepository cannot be null");
 	}
@@ -97,7 +99,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void constructorWhenAuthorizationServiceNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> new OAuth2AuthorizationCodeRequestAuthenticationProvider(
-				this.registeredClientRepository, null, this.authorizationConsentService))
+				this.registeredClientRepository, null, this.authorizationConsentService, this.tokenGenerator))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("authorizationService cannot be null");
 	}
@@ -105,7 +107,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 	@Test
 	public void constructorWhenAuthorizationConsentServiceNullThenThrowIllegalArgumentException() {
 		assertThatThrownBy(() -> new OAuth2AuthorizationCodeRequestAuthenticationProvider(
-				this.registeredClientRepository, this.authorizationService, null))
+				this.registeredClientRepository, this.authorizationService, null, null))
 				.isInstanceOf(IllegalArgumentException.class)
 				.hasMessage("authorizationConsentService cannot be null");
 	}

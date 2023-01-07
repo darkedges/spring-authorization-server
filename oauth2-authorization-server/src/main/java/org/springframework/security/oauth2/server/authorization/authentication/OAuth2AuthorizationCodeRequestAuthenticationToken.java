@@ -115,6 +115,40 @@ public class OAuth2AuthorizationCodeRequestAuthenticationToken extends AbstractA
 		setAuthenticated(true);
 	}
 
+	/**
+	 * Constructs an {@code OAuth2AuthorizationCodeRequestAuthenticationToken} using the provided parameters.
+	 *
+	 * @param authorizationUri the authorization URI
+	 * @param clientId the client identifier
+	 * @param principal the {@code Principal} (Resource Owner)
+	 * @param authorizationCode the {@link OAuth2AuthorizationCode}
+	 * @param redirectUri the redirect uri
+	 * @param state the state
+	 * @param scopes the authorized scope(s)
+	 * @param additionalParameters the additional parameters
+	 * @since 0.4.0
+	 */
+	public OAuth2AuthorizationCodeRequestAuthenticationToken(String authorizationUri, String clientId, Authentication principal,
+			OAuth2AuthorizationCode authorizationCode, @Nullable String redirectUri, @Nullable String state, @Nullable Set<String> scopes, Map<String, Object> additionalParameters) {
+		super(Collections.emptyList());
+		Assert.hasText(authorizationUri, "authorizationUri cannot be empty");
+		Assert.hasText(clientId, "clientId cannot be empty");
+		Assert.notNull(principal, "principal cannot be null");
+		Assert.notNull(authorizationCode, "authorizationCode cannot be null");
+		this.authorizationUri = authorizationUri;
+		this.clientId = clientId;
+		this.principal = principal;
+		this.authorizationCode = authorizationCode;
+		this.redirectUri = redirectUri;
+		this.state = state;
+		this.scopes = Collections.unmodifiableSet(
+				scopes != null ?
+						new HashSet<>(scopes) :
+						Collections.emptySet());
+		this.additionalParameters = additionalParameters;
+		setAuthenticated(true);
+	}
+
 	@Override
 	public Object getPrincipal() {
 		return this.principal;
