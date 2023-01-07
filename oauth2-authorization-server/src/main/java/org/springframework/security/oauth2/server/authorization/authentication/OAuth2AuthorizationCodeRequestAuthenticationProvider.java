@@ -135,17 +135,28 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 
 	private static OAuth2TokenContext createIdTokenContext(
 			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
-			RegisteredClient registeredClient, OAuth2Authorization authorization, Set<String> authorizedScopes) {
+			RegisteredClient registeredClient, OAuth2Authorization authorization, Set<String> authorizedScopes, OAuth2AuthorizationCode authorizationCode) {
+
+		OAuth2AuthorizationCodeRequestAuthenticationToken t = new OAuth2AuthorizationCodeRequestAuthenticationToken(
+				authorizationCodeRequestAuthentication.getAuthorizationUri(),
+				authorizationCodeRequestAuthentication.getClientId(),
+				(Authentication) authorizationCodeRequestAuthentication.getPrincipal(),
+				authorizationCode,
+				authorizationCodeRequestAuthentication.getRedirectUri(),
+				authorizationCodeRequestAuthentication.getState(),
+				authorizationCodeRequestAuthentication.getScopes(),
+				authorizationCodeRequestAuthentication.getAdditionalParameters()
+		);
 
 		// @formatter:off
 		DefaultOAuth2TokenContext.Builder tokenContextBuilder = DefaultOAuth2TokenContext.builder()
 				.registeredClient(registeredClient)
-				.principal((Authentication) authorizationCodeRequestAuthentication.getPrincipal())
+				.principal((Authentication) t.getPrincipal())
 				.authorizationServerContext(AuthorizationServerContextHolder.getContext())
 				.tokenType(new OAuth2TokenType(OidcParameterNames.ID_TOKEN))
 				.authorizedScopes(authorizedScopes)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.authorizationGrant(authorizationCodeRequestAuthentication);
+				.authorizationGrant(t);
 		// @formatter:on
 
 		if (authorization != null) {
@@ -349,11 +360,9 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		OidcIdToken idToken = null;
 		if (authorizationRequest.getScopes().contains(OidcScopes.OPENID) && FAPIUtil.isEnabled()) {
 			String requestUri = (String) authorizationCodeRequestAuthentication.getAdditionalParameters().get(com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST_URI);
-			System.out.println(requestUri);
 			OAuth2Authorization token = this.authorizationService.findByToken(requestUri, REQUEST_TOKEN_TYPE);
-			System.out.println(token);
 			OAuth2TokenContext idTokenContext = createIdTokenContext(
-					authorizationCodeRequestAuthentication, registeredClient, token, authorizationRequest.getScopes());
+					authorizationCodeRequestAuthentication, registeredClient, token, authorizationRequest.getScopes(), authorizationCode);
 			OAuth2Token generatedIdToken = this.idtokenGenerator.generate(idTokenContext);
 			idToken = new OidcIdToken(generatedIdToken.getTokenValue(), generatedIdToken.getIssuedAt(),
 					generatedIdToken.getExpiresAt(), ((Jwt) generatedIdToken).getClaims());

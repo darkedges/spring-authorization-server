@@ -31,11 +31,11 @@ import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
 import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.oidc.util.HashUtil;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.security.oauth2.server.authorization.oidc.util.HashUtil;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -127,14 +127,14 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 					claimsBuilder.claim(IdTokenClaimNames.NONCE, nonce);
 				}
 				if (FAPIUtil.isEnabled()) {
-					String state = (String) authorizationRequest.getState();
+					String state = authorizationRequest.getState();
 					OAuth2AuthorizationCodeRequestAuthenticationToken t = context.getAuthorizationGrant();
 					String code = t.getAuthorizationCode().getTokenValue();
 					if (StringUtils.hasText(code)) {
-						claimsBuilder.claim(IdTokenClaimNames.C_HASH, HashUtil.code(code, JWSAlgorithm.RS256,null));
+						claimsBuilder.claim(IdTokenClaimNames.C_HASH, HashUtil.code(code, JWSAlgorithm.RS256, null));
 					}
 					if (StringUtils.hasText(state)) {
-						claimsBuilder.claim(com.darkedges.org.springframework.security.oauth2.core.oidc.IdTokenClaimNames.S_HASH, HashUtil.state(state, JWSAlgorithm.RS256,null));
+						claimsBuilder.claim(com.darkedges.org.springframework.security.oauth2.core.oidc.IdTokenClaimNames.S_HASH, HashUtil.state(state, JWSAlgorithm.RS256, null));
 					}
 				}
 			}
