@@ -80,6 +80,7 @@ public class OAuth2AuthorizationCodeRequestAuthenticationProviderTests {
 		this.registeredClientRepository = mock(RegisteredClientRepository.class);
 		this.authorizationService = mock(OAuth2AuthorizationService.class);
 		this.authorizationConsentService = mock(OAuth2AuthorizationConsentService.class);
+		this.tokenGenerator = mock(OAuth2TokenGenerator.class);
 		this.authenticationProvider = new OAuth2AuthorizationCodeRequestAuthenticationProvider(
 				this.registeredClientRepository, this.authorizationService, this.authorizationConsentService, this.tokenGenerator);
 		this.principal = new TestingAuthenticationToken("principalName", "password");

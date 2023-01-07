@@ -41,7 +41,6 @@ public class FAPIUtil {
 
 	/**
 	 * Returns true if FAPI Processing is enabled
-	 *
 	 * @return true if FAPI Processing is enabled
 	 */
 	public static boolean isEnabled() {
@@ -54,7 +53,6 @@ public class FAPIUtil {
 
 	/**
 	 * Return the {@code client_id} - the client identifier of the JWT.
-	 *
 	 * @param jwtAssertion
 	 * @return {@code client_id} - the client identifier
 	 */
@@ -62,7 +60,8 @@ public class FAPIUtil {
 		try {
 			JWT jwt = JWTParser.parse(jwtAssertion);
 			return jwt.getJWTClaimsSet().getIssuer();
-		} catch (Exception ex) {
+		}
+		catch (Exception ex) {
 			logger.trace("Failed to parse token", ex);
 			throw new BadJwtException(String.format(DECODING_ERROR_MESSAGE_TEMPLATE, ex.getMessage()), ex);
 		}

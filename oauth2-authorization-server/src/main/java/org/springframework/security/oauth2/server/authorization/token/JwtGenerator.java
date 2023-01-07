@@ -70,17 +70,31 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 	@Nullable
 	@Override
 	public Jwt generate(OAuth2TokenContext context) {
-		if (context.getTokenType() == null ||
-				(!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType()) &&
-						!OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())
-						|| (!OIDCTokenType.CODE.getValue().equals(context.getTokenType().getValue()) && FAPIUtil.isEnabled()))) {
-			return null;
+		System.out.println("context.getTokenType(): " + context.getTokenType().getValue());
+		System.out.println("FAPIUtil.isEnabled():   " + FAPIUtil.isEnabled());
+		if (!FAPIUtil.isEnabled()) {
+			if (context.getTokenType() == null ||
+					(!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType()) &&
+							!OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())
+					)) {
+				return null;
+			}
+		} else {
+			if (context.getTokenType() == null ||
+					(!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType()) &&
+							!OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue()) &&
+							!OIDCTokenType.CODE.getValue().equals(context.getTokenType().getValue()))
+			) {
+				return null;
+			}
 		}
+//				( && FAPIUtil.isEnabled()) &&
+
 		if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType()) &&
 				!OAuth2TokenFormat.SELF_CONTAINED.equals(context.getRegisteredClient().getTokenSettings().getAccessTokenFormat())) {
 			return null;
 		}
-
+		System.out.println("here");
 		String issuer = null;
 		if (context.getAuthorizationServerContext() != null) {
 			issuer = context.getAuthorizationServerContext().getIssuer();
