@@ -303,7 +303,6 @@ public final class OAuth2AuthorizationEndpointFilter extends OncePerRequestFilte
 				queryParams.put(OidcParameterNames.ID_TOKEN, authorizationCodeRequestAuthentication.getAdditionalParameters().get(OidcParameterNames.ID_TOKEN).toString());
 			}
 			redirectUri = uriBuilder.build(queryParams).toString();
-			System.out.println(redirectUri);
 		} else {
 			redirectUri = uriBuilder.toUriString();
 		}

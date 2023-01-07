@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.server.authorization.token;
 
 import com.darkedges.fapi.FAPIUtil;
+import com.nimbusds.jose.JWSAlgorithm;
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
@@ -28,12 +29,13 @@ import org.springframework.security.oauth2.jose.jws.JwsAlgorithm;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
-import org.springframework.security.oauth2.server.authorization.OIDCTokenType;
+import org.springframework.security.oauth2.server.authorization.authentication.OAuth2AuthorizationCodeRequestAuthenticationToken;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+import org.springframework.security.oauth2.server.authorization.oidc.util.HashUtil;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -70,31 +72,17 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 	@Nullable
 	@Override
 	public Jwt generate(OAuth2TokenContext context) {
-		System.out.println("context.getTokenType(): " + context.getTokenType().getValue());
-		System.out.println("FAPIUtil.isEnabled():   " + FAPIUtil.isEnabled());
-		if (!FAPIUtil.isEnabled()) {
-			if (context.getTokenType() == null ||
-					(!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType()) &&
-							!OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())
-					)) {
-				return null;
-			}
-		} else {
-			if (context.getTokenType() == null ||
-					(!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType()) &&
-							!OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue()) &&
-							!OIDCTokenType.CODE.getValue().equals(context.getTokenType().getValue()))
-			) {
-				return null;
-			}
+		if (context.getTokenType() == null ||
+				(!OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType()) &&
+						!OidcParameterNames.ID_TOKEN.equals(context.getTokenType().getValue())
+				)) {
+			return null;
 		}
-//				( && FAPIUtil.isEnabled()) &&
 
 		if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType()) &&
 				!OAuth2TokenFormat.SELF_CONTAINED.equals(context.getRegisteredClient().getTokenSettings().getAccessTokenFormat())) {
 			return null;
 		}
-		System.out.println("here");
 		String issuer = null;
 		if (context.getAuthorizationServerContext() != null) {
 			issuer = context.getAuthorizationServerContext().getIssuer();
@@ -138,13 +126,23 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 				if (StringUtils.hasText(nonce)) {
 					claimsBuilder.claim(IdTokenClaimNames.NONCE, nonce);
 				}
+				if (FAPIUtil.isEnabled()) {
+					String state = (String) authorizationRequest.getState();
+					OAuth2AuthorizationCodeRequestAuthenticationToken t = context.getAuthorizationGrant();
+					String code = t.getAuthorizationCode().getTokenValue();
+					if (StringUtils.hasText(code)) {
+						claimsBuilder.claim(IdTokenClaimNames.C_HASH, HashUtil.code(code, JWSAlgorithm.RS256,null));
+					}
+					if (StringUtils.hasText(state)) {
+						claimsBuilder.claim(com.darkedges.org.springframework.security.oauth2.core.oidc.IdTokenClaimNames.S_HASH, HashUtil.state(state, JWSAlgorithm.RS256,null));
+					}
+				}
 			}
 			// TODO Add 'auth_time' claim
 		}
 		// @formatter:on
 
 		JwsHeader.Builder jwsHeaderBuilder = JwsHeader.with(jwsAlgorithm);
-
 		if (this.jwtCustomizer != null) {
 			// @formatter:off
 			JwtEncodingContext.Builder jwtContextBuilder = JwtEncodingContext.with(jwsHeaderBuilder, claimsBuilder)

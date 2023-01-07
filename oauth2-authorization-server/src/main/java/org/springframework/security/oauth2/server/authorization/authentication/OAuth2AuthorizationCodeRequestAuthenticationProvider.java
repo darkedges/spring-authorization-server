@@ -70,15 +70,16 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	private static final String PKCE_ERROR_URI = "https://datatracker.ietf.org/doc/html/rfc7636#section-4.4.1";
 	private static final StringKeyGenerator DEFAULT_STATE_GENERATOR =
 			new Base64StringKeyGenerator(Base64.getUrlEncoder());
+	private static final OAuth2TokenType REQUEST_TOKEN_TYPE =
+			new OAuth2TokenType(com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST);
 	private final Log logger = LogFactory.getLog(getClass());
 	private final RegisteredClientRepository registeredClientRepository;
 	private final OAuth2AuthorizationService authorizationService;
 	private final OAuth2AuthorizationConsentService authorizationConsentService;
+	private final OAuth2TokenGenerator<? extends OAuth2Token> idtokenGenerator;
 	private OAuth2TokenGenerator<OAuth2AuthorizationCode> authorizationCodeGenerator = new OAuth2AuthorizationCodeGenerator();
 	private Consumer<OAuth2AuthorizationCodeRequestAuthenticationContext> authenticationValidator =
 			new OAuth2AuthorizationCodeRequestAuthenticationValidator();
-
-	private final OAuth2TokenGenerator<? extends OAuth2Token> idtokenGenerator;
 
 	/**
 	 * Constructs an {@code OAuth2AuthorizationCodeRequestAuthenticationProvider} using the provided parameters.
@@ -86,7 +87,7 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 	 * @param registeredClientRepository  the repository of registered clients
 	 * @param authorizationService        the authorization service
 	 * @param authorizationConsentService the authorization consent service
-	 * @param idtokenGenerator              the token generator
+	 * @param idtokenGenerator            the token generator
 	 */
 	public OAuth2AuthorizationCodeRequestAuthenticationProvider(RegisteredClientRepository registeredClientRepository,
 			OAuth2AuthorizationService authorizationService, OAuth2AuthorizationConsentService authorizationConsentService,
@@ -120,6 +121,28 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 				.principal((Authentication) authorizationCodeRequestAuthentication.getPrincipal())
 				.authorizationServerContext(AuthorizationServerContextHolder.getContext())
 				.tokenType(new OAuth2TokenType(OAuth2ParameterNames.CODE))
+				.authorizedScopes(authorizedScopes)
+				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+				.authorizationGrant(authorizationCodeRequestAuthentication);
+		// @formatter:on
+
+		if (authorization != null) {
+			tokenContextBuilder.authorization(authorization);
+		}
+
+		return tokenContextBuilder.build();
+	}
+
+	private static OAuth2TokenContext createIdTokenContext(
+			OAuth2AuthorizationCodeRequestAuthenticationToken authorizationCodeRequestAuthentication,
+			RegisteredClient registeredClient, OAuth2Authorization authorization, Set<String> authorizedScopes) {
+
+		// @formatter:off
+		DefaultOAuth2TokenContext.Builder tokenContextBuilder = DefaultOAuth2TokenContext.builder()
+				.registeredClient(registeredClient)
+				.principal((Authentication) authorizationCodeRequestAuthentication.getPrincipal())
+				.authorizationServerContext(AuthorizationServerContextHolder.getContext())
+				.tokenType(new OAuth2TokenType(OidcParameterNames.ID_TOKEN))
 				.authorizedScopes(authorizedScopes)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
 				.authorizationGrant(authorizationCodeRequestAuthentication);
@@ -323,9 +346,15 @@ public final class OAuth2AuthorizationCodeRequestAuthenticationProvider implemen
 		}
 
 		// ----- ID token -----
-		OidcIdToken idToken;
+		OidcIdToken idToken = null;
 		if (authorizationRequest.getScopes().contains(OidcScopes.OPENID) && FAPIUtil.isEnabled()) {
-			OAuth2Token generatedIdToken = this.idtokenGenerator.generate(tokenContext);
+			String requestUri = (String) authorizationCodeRequestAuthentication.getAdditionalParameters().get(com.darkedges.org.springframework.security.oauth2.core.OAuth2ParameterNames.REQUEST_URI);
+			System.out.println(requestUri);
+			OAuth2Authorization token = this.authorizationService.findByToken(requestUri, REQUEST_TOKEN_TYPE);
+			System.out.println(token);
+			OAuth2TokenContext idTokenContext = createIdTokenContext(
+					authorizationCodeRequestAuthentication, registeredClient, token, authorizationRequest.getScopes());
+			OAuth2Token generatedIdToken = this.idtokenGenerator.generate(idTokenContext);
 			idToken = new OidcIdToken(generatedIdToken.getTokenValue(), generatedIdToken.getIssuedAt(),
 					generatedIdToken.getExpiresAt(), ((Jwt) generatedIdToken).getClaims());
 			if (this.logger.isTraceEnabled()) {

@@ -14,6 +14,7 @@ dependencies {
 		exclude group: "commons-logging", module: "commons-logging"
 	}
 	api "com.nimbusds:nimbus-jose-jwt"
+	api "com.nimbusds:oauth2-oidc-sdk:9.43.1"
 	api "com.fasterxml.jackson.core:jackson-databind"
 
 	optional "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
