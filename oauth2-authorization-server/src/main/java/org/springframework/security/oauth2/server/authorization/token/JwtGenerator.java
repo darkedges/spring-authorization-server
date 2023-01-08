@@ -128,13 +128,15 @@ public final class JwtGenerator implements OAuth2TokenGenerator<Jwt> {
 				}
 				if (FAPIUtil.isEnabled()) {
 					String state = authorizationRequest.getState();
-					OAuth2AuthorizationCodeRequestAuthenticationToken t = context.getAuthorizationGrant();
-					String code = t.getAuthorizationCode().getTokenValue();
-					if (StringUtils.hasText(code)) {
-						claimsBuilder.claim(IdTokenClaimNames.C_HASH, HashUtil.code(code, JWSAlgorithm.RS256, null));
-					}
-					if (StringUtils.hasText(state)) {
-						claimsBuilder.claim(com.darkedges.org.springframework.security.oauth2.core.oidc.IdTokenClaimNames.S_HASH, HashUtil.state(state, JWSAlgorithm.RS256, null));
+					Object t = context.getAuthorizationGrant();
+					if (t instanceof OAuth2AuthorizationCodeRequestAuthenticationToken) {
+						String code = ((OAuth2AuthorizationCodeRequestAuthenticationToken) t).getAuthorizationCode().getTokenValue();
+						if (StringUtils.hasText(code)) {
+							claimsBuilder.claim(IdTokenClaimNames.C_HASH, HashUtil.code(code, JWSAlgorithm.RS256, null));
+						}
+						if (StringUtils.hasText(state)) {
+							claimsBuilder.claim(com.darkedges.org.springframework.security.oauth2.core.oidc.IdTokenClaimNames.S_HASH, HashUtil.state(state, JWSAlgorithm.RS256, null));
+						}
 					}
 				}
 			}

@@ -15,8 +15,11 @@
  */
 package sample.config;
 
-import java.util.UUID;
-
+import com.nimbusds.jose.jwk.ECKey;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.JWKSource;
+import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -25,9 +28,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
-import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationResponseType;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
-import org.springframework.security.oauth2.core.oidc.endpoint.OidcParameterNames;
 import org.springframework.security.oauth2.jose.jws.JwsAlgorithms;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.server.authorization.client.InMemoryRegisteredClientRepository;
@@ -39,13 +40,10 @@ import org.springframework.security.oauth2.server.authorization.settings.Authori
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.web.SecurityFilterChain;
-
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.jwk.source.JWKSource;
-import com.nimbusds.jose.proc.SecurityContext;
-
 import sample.jose.Jwks;
+
+import java.util.Arrays;
+import java.util.UUID;
 
 @Configuration(proxyBeanMethods = false)
 public class AuthorizationServerConfig {
@@ -54,23 +52,22 @@ public class AuthorizationServerConfig {
 		String jwkSetUri = "http://127.0.0.1:9000/resources";
 		ClientSettings clientSettings = ClientSettings.builder().requireProofKey(false)
 				.tokenEndpointAuthenticationSigningAlgorithm(SignatureAlgorithm.ES256).jwkSetUrl(jwkSetUri).build();
-		TokenSettings tokenSettings = TokenSettings.builder().build();
+		TokenSettings tokenSettings = TokenSettings.builder().idTokenSignatureAlgorithm(SignatureAlgorithm.ES256)
+				.build();
 		RegisteredClient registeredClient1 = RegisteredClient.withId(UUID.randomUUID().toString())
 				.clientId("a9fa0032-2177-4f7b-aae2-d2f7df486d99").clientSecret("")
 				.clientAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.redirectUri("https://www.certification.openid.net/test/a/darkedges/callback")
-				.scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE).clientSettings(clientSettings)
-				.tokenSettings(tokenSettings).build();
+				.redirectUri("https://www.certification.openid.net/test/a/darkedges/callback").scope(OidcScopes.OPENID)
+				.scope(OidcScopes.PROFILE).clientSettings(clientSettings).tokenSettings(tokenSettings).build();
 		RegisteredClient registeredClient2 = RegisteredClient.withId(UUID.randomUUID().toString())
 				.clientId("95efe06f-5e05-4d3c-b9a9-eabb49d054de").clientSecret("")
 				.clientAuthenticationMethod(ClientAuthenticationMethod.PRIVATE_KEY_JWT)
 				.authorizationGrantType(AuthorizationGrantType.CLIENT_CREDENTIALS)
 				.authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-				.redirectUri("https://www.certification.openid.net/test/a/darkedges/callback")
-				.scope(OidcScopes.OPENID).scope(OidcScopes.PROFILE).clientSettings(clientSettings)
-				.tokenSettings(tokenSettings).build();
+				.redirectUri("https://www.certification.openid.net/test/a/darkedges/callback").scope(OidcScopes.OPENID)
+				.scope(OidcScopes.PROFILE).clientSettings(clientSettings).tokenSettings(tokenSettings).build();
 
 		return new InMemoryRegisteredClientRepository(registeredClient1, registeredClient2);
 	}
@@ -118,7 +115,8 @@ public class AuthorizationServerConfig {
 	@Bean
 	public JWKSource<SecurityContext> jwkSource() {
 		RSAKey rsaKey = Jwks.generateRsa();
-		JWKSet jwkSet = new JWKSet(rsaKey);
+		ECKey ecKey = Jwks.generateEc();
+		JWKSet jwkSet = new JWKSet(Arrays.asList(rsaKey, ecKey));
 		return (jwkSelector, securityContext) -> jwkSelector.select(jwkSet);
 	}
 
